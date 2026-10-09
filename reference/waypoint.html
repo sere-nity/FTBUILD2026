@@ -1,0 +1,493 @@
+<title>Waypoint</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:ital,wght@0,500;1,400&display=swap">
+<style>
+/* Layout: a ledger. Five stacked levels (world → code) on the left, a streaming change log on the right, one floating prompt bar. Monochrome paper and ink; one accent reserved for "changed". */
+:root{
+  --paper:#f6f7f8; --ink:#17191c; --ink-2:#4a4f58; --ink-3:#8a8f99; --rule:#d9dce2; --card:#ffffff; --card-2:#eef0f3;
+  --signal:#1d6b8f; --signal-soft:#e2eef4; --warn:#9a6b12; --warn-soft:#f7edd5; --good:#2f6b4a;
+  --display:"IBM Plex Serif",Georgia,serif; --body:"IBM Plex Sans",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#121417; --ink:#e8eaee; --ink-2:#b4b9c3; --ink-3:#737a86; --rule:#2a2f37; --card:#1a1d22; --card-2:#22262d;
+  --signal:#6fb6d6; --signal-soft:#17303c; --warn:#d9a94a; --warn-soft:#3a2d12; --good:#7fc29b; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#121417; --ink:#e8eaee; --ink-2:#b4b9c3; --ink-3:#737a86; --rule:#2a2f37; --card:#1a1d22; --card-2:#22262d;
+  --signal:#6fb6d6; --signal-soft:#17303c; --warn:#d9a94a; --warn-soft:#3a2d12; --good:#7fc29b; color-scheme:dark}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:14px;line-height:1.45}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
+
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:10px 20px;background:var(--paper);border-bottom:1px solid var(--rule)}
+.brand{font-family:var(--display);font-weight:500;font-size:17px;letter-spacing:.01em}
+.brand small{font-family:var(--body);font-weight:400;color:var(--ink-3);margin-left:8px;font-size:12px}
+.snaps{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-family:var(--mono);font-size:12px}
+.snaps .lbl{color:var(--ink-3);text-transform:uppercase;letter-spacing:.08em;font-size:10px;margin-right:4px}
+.snap{padding:3px 9px;border:1px solid var(--rule);border-radius:999px;color:var(--ink-2)}
+.snap.active{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.snap.now{border-style:dashed}
+.top .spacer{flex:1}
+.tbtn{padding:5px 10px;border:1px solid var(--rule);border-radius:6px;font-size:12px;color:var(--ink-2)}
+.tbtn.on{background:var(--signal-soft);border-color:var(--signal);color:var(--signal)}
+.tbtn:hover{border-color:var(--ink-3)}
+
+.job{display:grid;grid-template-columns:1fr auto;gap:4px 16px;align-items:center;padding:10px 20px;background:var(--card-2);border-bottom:1px solid var(--rule);font-family:var(--mono);font-size:12px}
+.job .line1{display:flex;align-items:center;gap:10px;color:var(--ink)}
+.job .line2{grid-column:1/-1;color:var(--ink-3);display:flex;gap:14px;flex-wrap:wrap}
+.job .stop{padding:3px 9px;border:1px solid var(--warn);color:var(--warn);border-radius:5px;font-family:var(--body)}
+.job .bar{grid-column:1/-1;height:2px;background:var(--rule);border-radius:2px;overflow:hidden}
+.job .bar i{display:block;height:100%;width:0;background:var(--signal);transition:width .4s}
+.readonly{padding:8px 20px;background:var(--warn-soft);color:var(--warn);font-size:12px;border-bottom:1px solid var(--rule)}
+
+main{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:0;min-height:calc(100% - 52px)}
+.stack{padding:18px 20px 120px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.log{border-left:1px solid var(--rule);padding:16px 18px 120px;font-family:var(--mono);font-size:12px;color:var(--ink-2);min-width:0}
+@media (max-width:860px){main{grid-template-columns:1fr}.log{border-left:0;border-top:1px solid var(--rule)}}
+
+.level{border-top:1px solid var(--rule);padding-top:10px}
+.level-head{display:flex;align-items:baseline;gap:12px;margin-bottom:8px}
+.level-head h3{margin:0;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-2);font-weight:600}
+.level-head .count{font-family:var(--mono);font-size:11px;color:var(--ink-3)}
+.level-head .count.changed{color:var(--signal)}
+.level-head .entry{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--signal)}
+.level.scanning .cards,.level.scanning .compact{opacity:.35;transition:opacity .3s}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+.compact{color:var(--ink-2);font-size:13px;padding:2px 0 6px}
+.compact b{font-weight:500;color:var(--ink)}
+.compact button{color:var(--ink-3);text-decoration:underline;text-underline-offset:3px;margin-left:8px;font-size:12px}
+
+.card{background:var(--card);border:1px solid var(--rule);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:7px;min-width:0;cursor:pointer;transition:border-color .25s,box-shadow .25s,opacity .3s}
+.card:hover{border-color:var(--ink-3)}
+.card.preparing{border-color:var(--signal)}
+.card.proposed,.card.changed{border-color:var(--signal);box-shadow:inset 3px 0 0 var(--signal)}
+.card.unplaced{border-style:dashed}
+.card.hl{box-shadow:0 0 0 2px var(--signal-soft);border-color:var(--signal)}
+.card-head{display:flex;align-items:flex-start;gap:8px}
+.card-head h4{margin:0;font-weight:500;font-size:14px;line-height:1.3;flex:1;min-width:0;text-wrap:balance}
+.chip{font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;padding:2px 6px;border-radius:4px;background:var(--card-2);color:var(--ink-2);white-space:nowrap}
+.chip.live,.chip.robust{background:var(--signal-soft);color:var(--signal)}
+.chip.fragile,.chip.rising{background:var(--warn-soft);color:var(--warn)}
+.chip.fading{color:var(--ink-3)}
+.fields{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;font-family:var(--mono);font-size:12px;color:var(--ink-2)}
+.fields .k{color:var(--ink-3)}
+.fields .v{color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dots{letter-spacing:1px}
+.ghost{color:var(--ink-3);text-decoration:line-through;margin-right:6px}
+.arrow{color:var(--signal);margin-left:4px}
+.arrow.down{color:var(--warn)}
+.flag{color:var(--warn)}
+.status{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;color:var(--signal);min-height:16px}
+.status .note{color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.spin{width:11px;height:11px;border:1.5px solid var(--signal);border-right-color:transparent;border-radius:50%;animation:spin .8s linear infinite;flex:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+.detail{border-top:1px dashed var(--rule);padding-top:8px;display:flex;flex-direction:column;gap:8px;font-size:12px;color:var(--ink-2)}
+.detail h5{margin:0 0 3px;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
+.detail ul{margin:0;padding-left:16px}
+.detail li{margin:2px 0}
+.detail a{color:var(--signal);text-decoration:none;border-bottom:1px solid var(--signal-soft)}
+.detail .none{color:var(--ink-3);font-style:italic}
+.analogue{background:var(--card-2);border-radius:6px;padding:8px 10px;display:grid;grid-template-columns:auto 1fr;gap:2px 10px;font-size:12px}
+.analogue .k{color:var(--ink-3);font-family:var(--mono);font-size:11px}
+.analogue .t{grid-column:1/-1;font-family:var(--display);font-style:italic;color:var(--ink);margin-bottom:2px}
+.hist{font-family:var(--mono);font-size:11px;color:var(--ink-3)}
+.hist li{list-style:none}
+
+.log h3{margin:0 0 10px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-2);font-weight:600;font-family:var(--body)}
+.entry{border-top:1px solid var(--rule);padding:8px 0}
+.entry .eh{display:flex;gap:8px;color:var(--ink-3);margin-bottom:4px}
+.entry .eh b{color:var(--ink);font-weight:500}
+.entry .eh .kind{text-transform:uppercase;letter-spacing:.08em;font-size:10px;padding:1px 5px;border:1px solid var(--rule);border-radius:3px}
+.entry .l{padding:2px 0 2px 10px;border-left:2px solid var(--rule);margin:2px 0;color:var(--ink-2);line-height:1.5;word-wrap:break-word}
+.entry .l.sig{border-left-color:var(--signal);color:var(--ink)}
+.entry .l.warn{border-left-color:var(--warn)}
+.entry .l a{color:var(--signal);text-decoration:none;border-bottom:1px solid var(--signal-soft)}
+.entry .l .src{color:var(--ink-3)}
+
+.barwrap{position:fixed;left:0;right:0;bottom:0;padding:10px 20px calc(14px + env(safe-area-inset-bottom,0px));pointer-events:none;z-index:6;display:flex;flex-direction:column;align-items:center;gap:8px}
+.hints{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;pointer-events:auto}
+.hint{font-family:var(--mono);font-size:11px;padding:4px 9px;border-radius:999px;background:var(--card);border:1px solid var(--rule);color:var(--ink-2)}
+.hint:hover{border-color:var(--signal);color:var(--signal)}
+.prompt{pointer-events:auto;width:min(680px,100%);display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--rule);border-radius:12px;padding:10px 14px;box-shadow:0 10px 30px rgba(0,0,0,.12)}
+.prompt .pen{color:var(--ink-3);font-family:var(--mono)}
+.prompt input{flex:1;min-width:0;border:0;background:none;font:inherit;font-size:14px;color:var(--ink);outline:none}
+.prompt input::placeholder{color:var(--ink-3)}
+.prompt .kbd{font-family:var(--mono);font-size:10px;color:var(--ink-3);border:1px solid var(--rule);border-radius:4px;padding:1px 5px}
+
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<header class="top">
+  <div class="brand">Waypoint<small>Stewardship · giving platform</small></div>
+  <div class="snaps" id="snaps"></div>
+  <span class="spacer"></span>
+  <button class="tbtn" id="cmp">Compare to last</button>
+  <button class="tbtn" id="save">Save snapshot</button>
+</header>
+<div class="job" id="job" hidden>
+  <div class="line1"><span class="spin"></span><span id="jobtitle">Sizing change…</span></div>
+  <button class="stop" id="stop">Stop · Esc</button>
+  <div class="line2" id="jobmeta"></div>
+  <div class="bar"><i id="jobbar"></i></div>
+</div>
+<div class="readonly" id="ro" hidden></div>
+
+<main>
+  <section class="stack" id="stack"></section>
+  <aside class="log"><h3>Log</h3><div id="log"></div></aside>
+</main>
+
+<div class="barwrap">
+  <div class="hints" id="hints"></div>
+  <form class="prompt" id="form">
+    <span class="pen">✎</span>
+    <input id="prompt" placeholder="tell it what changed, or ask…" autocomplete="off">
+    <span class="kbd">⌘K</span>
+  </form>
+</div>
+
+<script>
+/* ---------- seed ---------- */
+const LEVELS=[
+  {id:'world',name:'World',entry:'top'},
+  {id:'assumptions',name:'Assumptions'},
+  {id:'initiatives',name:'Initiatives'},
+  {id:'product',name:'Product'},
+  {id:'code',name:'Code',entry:'bottom'}];
+
+const SRC={
+  bluestate:{t:'Blue State / Candid, “Brand discovery in the age of AI” (Nov 2025): 4.5% of donors use AI to find causes; AI traffic to nonprofit sites +1000% YoY, organic search −35%',u:'https://candid.org/blogs/how-ai-tools-affect-online-giving-research-data/'},
+  similarweb:{t:'Similarweb gen-AI landscape: 770.7M AI referral visits/month, +117% YoY; ChatGPT share fell from ~76% to ~53% in a year',u:'https://aisearch.similarweb.com/blog/gen-ai-stats/'},
+  pew:{t:'Pew Research (Jul 2025): users click a result on 8% of searches with an AI Overview vs 15% without; 1% click AIO citations',u:'https://www.pewresearch.org/'},
+  epoch:{t:'Epoch AI, “The plunging price of thought” (2026): inference price per capability falling ~13× per year since 2023',u:'https://epoch.ai/'},
+  bis:{t:'US export-control directive (12 Jun 2026): access to Claude Fable 5 / Mythos 5 suspended worldwide; restored 1 Jul. 19 days',u:'https://www.anthropic.com/news/fable-mythos-access'},
+  genrep:{t:'Stewardship Generosity Report 2026 (n=6,004): people who trust their church “a lot” make up 74% of givers; prompt-driven giving −11%',u:'https://www.stewardship.org.uk/'},
+  fai:{t:'Fundraising.AI donor survey (Aug 2025, n=1,031): top concern (34%) is AI bots posing as humans for a charity',u:'https://fundraising.ai/donor-perceptions-of-ai-2025/'},
+  footprint:{t:'Charity AI Brand Footprint (Q3 2025): across 110 donor prompts, chatbots lean on validators (Charity Navigator, GiveWell); UK Christian causes largely absent',u:'https://nonprofitnewsfeed.com/'},
+  slywotzky:{t:'Slywotzky, Value Migration (1996): value moves to the layer that stays scarce when neighbours commoditise',u:''},
+  rand:{t:'Dewar, Assumption-Based Planning (RAND, 2002): load-bearing assumptions, signposts, hedging actions',u:'https://www.rand.org/'},
+  tetlock:{t:'Tetlock & Gardner, Superforecasting (2015): small frequent updates; record reasoning before outcomes',u:''},
+  mcgrath:{t:'McGrath & MacMillan, Discovery-Driven Planning (HBR 1995): write assumptions down, convert to checkpoints',u:''},
+};
+
+const ANALOGUES={
+  classifieds:{t:'Newspapers and classifieds, 1998–2010',what:'listing distribution',where:'vertical marketplaces (Rightmove, Auto Trader)',tracked:'share of listings moving online',believed:'“readers come to us for the paper, the ads follow”'},
+  appstore:{t:'App stores, 2008–',what:'distribution of software',where:'the platform owner, who sets the terms',tracked:'platform policy changes, take rates',believed:'“we are a customer, not a tenant”'},
+  seo:{t:'Search and SEO, 2004–2024',what:'being found',where:'whoever ranked, then whoever is cited',tracked:'organic click-through by query type',believed:'“organic traffic is a permanent channel”'},
+  travel:{t:'Travel agents and OTAs, 1996–2008',what:'booking a simple trip',where:'complex, high-trust, high-value trips',tracked:'share of bookings self-served',believed:'“people need a human to book”'},
+  netflix:{t:'Netflix DVD-by-mail → streaming, 2007',what:'physical delivery',where:'on-demand delivery',tracked:'US broadband penetration (the trigger)',believed:'the survivor pre-registered the threshold and waited'},
+  mobilefirst:{t:'Mobile-first design, 2010',what:'desktop-first layouts',where:'teams that rebuilt early',tracked:'mobile share of sessions',believed:'“we will wait until it is proven”, then rebuilt twice'},
+};
+
+function seed(){return {
+  cards:[
+    {id:'w1',level:'world',title:'Agent Concierge',sub:'agents · cheap intelligence',chip:'live',f:{signposts:'3 / 4 hit',lastMoved:'Sep 2026'},sources:['similarweb','bluestate','epoch'],signposts:['AI chatbot share of referrals > 1% (Statcounter)','AI referrals to our site > 5% of new-donor sessions (GA4)','price per capability halving within 6 months (Epoch)','agent payment rails in a UK provider'],hist:[]},
+    {id:'w2',level:'world',title:'Walled Gardens',sub:'agents · gated intelligence',chip:'watch',f:{signposts:'1 / 4 hit',lastMoved:'Jun 2026'},sources:['bis'],signposts:['frontier vendor availability incident > 72h','single platform > 50% of gen-AI traffic','export-control or licensing action affecting UK','enterprise model allowlists tighten'],hist:[]},
+    {id:'a1',level:'assumptions',title:'AI assistants will mediate how donors find causes',kind:'interpretation',ev:3,us:4,exposure:1,sources:['bluestate','similarweb','pew','footprint'],analogue:'classifieds',hist:['Jul: ev ●●○○○ → ●●●○○ (Blue State data)']},
+    {id:'a2',level:'assumptions',title:'Our AI vendor stays available on current terms',kind:'prediction',ev:3,us:4,exposure:0,sources:['bis'],analogue:'appstore',hist:[]},
+    {id:'a3',level:'assumptions',title:'Organic search keeps bringing new donors',kind:'interpretation',ev:2,us:3,exposure:1,sources:['pew','bluestate'],analogue:'seo',hist:['Jul: us ●●●●○ → ●●●○○ (team review)']},
+    {id:'a4',level:'assumptions',title:'Donors trust institutions over AI answers',kind:'fact',ev:4,us:4,exposure:1,sources:['genrep','fai'],analogue:'travel',hist:[]},
+    {id:'i1',level:'initiatives',title:'Agent-facing giving API',pct:20,rests:['a1','a2'],chip:'hedge',trigger:'if primary-model outage > 72h → add a second provider',hist:[]},
+    {id:'i2',level:'initiatives',title:'Giving-discovery SEO',pct:80,rests:['a3'],chip:'fragile',trigger:'if AI referrals > 20% of new-donor sessions → revisit SEO budget',hist:[]},
+    {id:'i3',level:'initiatives',title:'Open, citable charity data',pct:50,rests:['a4'],chip:'robust',trigger:'',hist:[]},
+    {id:'p1',level:'product',title:'Donor discovery flow',note:'cause search, CauseFinder listing',hist:[]},
+    {id:'p2',level:'product',title:'Partner search',note:'verified-partner directory',hist:[]},
+    {id:'p3',level:'product',title:'Giving app',note:'Pay by Bank, Gift Aid summaries',hist:[]},
+    {id:'c1',level:'code',title:'Last milestone: Pay by Bank',note:'6 files · payments/* · Sep 2026',hist:[]},
+  ],
+  expanded:{world:true,assumptions:true,initiatives:true,product:false,code:false},
+  changed:{},
+};}
+
+/* ---------- state ---------- */
+let state=seed();
+let snapshots=[{name:'Jul',state:JSON.parse(JSON.stringify(state)),at:'2026-07-14'}];
+let viewing=null;          // index into snapshots when read-only, else null
+let compare=false;
+let running=false, abort=false;
+let open={};               // expanded cards
+const $=s=>document.querySelector(s);
+const clone=o=>JSON.parse(JSON.stringify(o));
+const byId=id=>state.cards.find(c=>c.id===id);
+const dots=n=>'●'.repeat(n)+'○'.repeat(5-n);
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+
+/* ---------- render ---------- */
+function render(){
+  const s=viewing===null?state:snapshots[viewing].state;
+  const base=snapshots[snapshots.length-1].state;
+  const stack=$('#stack'); stack.innerHTML='';
+  for(const L of LEVELS){
+    const cards=s.cards.filter(c=>c.level===L.id);
+    const nChanged=cards.filter(c=>s.changed[c.id]).length;
+    const el=document.createElement('section'); el.className='level'; el.dataset.level=L.id;
+    const exp=s.expanded[L.id];
+    el.innerHTML=`<div class="level-head"><h3>${L.name}</h3><span class="count ${nChanged?'changed':''}">${nChanged?nChanged+' changed':cards.length+' '+(L.id==='world'?'scenarios':L.id==='code'?'milestone':'cards')}</span><span class="entry" data-entry></span></div>`;
+    if(exp){
+      const grid=document.createElement('div'); grid.className='cards';
+      for(const c of cards) grid.appendChild(renderCard(c,s,base));
+      el.appendChild(grid);
+    }else{
+      const line=document.createElement('div'); line.className='compact';
+      line.innerHTML=cards.map(c=>`<b>${c.title}</b>${c.note?' · '+c.note:''}`).join(' &nbsp;·&nbsp; ')+`<button data-expand="${L.id}">expand</button>`;
+      el.appendChild(line);
+    }
+    stack.appendChild(el);
+  }
+  renderSnaps();
+  $('#cmp').classList.toggle('on',compare);
+  $('#ro').hidden=viewing===null;
+  if(viewing!==null) $('#ro').textContent=`Viewing snapshot “${snapshots[viewing].name}” · read-only · click “now” to return`;
+}
+
+function renderCard(c,s,base){
+  const el=document.createElement('article'); el.className='card'; el.dataset.id=c.id;
+  if(s.changed[c.id]) el.classList.add('changed');
+  if(c.kind==='unplaced') el.classList.add('unplaced');
+  const b=base.cards.find(x=>x.id===c.id);
+  const diff=(key,fmt)=>{ if(!compare||!b||b[key]===c[key]||b[key]===undefined) return fmt(c[key]); return `<span class="ghost">${fmt(b[key])}</span>${fmt(c[key])}`; };
+  const trend=c.trend?`<span class="arrow ${c.trend==='↓'?'down':''}">${c.trend}</span>`:'';
+  let chip='',fields='';
+  if(c.level==='world'){
+    chip=`<span class="chip ${c.chip}">${c.chip}</span>`;
+    fields=`<span class="k">axes</span><span class="v">${c.sub}</span><span class="k">signposts</span><span class="v">${diff('f',v=>v.signposts)}${trend}</span><span class="k">last moved</span><span class="v">${c.f.lastMoved}</span>`;
+  }else if(c.level==='assumptions'){
+    chip=`<span class="chip">${c.kind}</span>`;
+    const gap=Math.abs(c.ev-c.us)>=2?` <span class="flag" title="evidence and belief disagree">⚠</span>`:'';
+    fields=`<span class="k">evidence</span><span class="v dots">${diff('ev',dots)}${c.trend&&c.trendOn==='ev'?trend:''}</span><span class="k">belief</span><span class="v dots">${diff('us',dots)}${gap}</span><span class="k">exposure</span><span class="v">${diff('exposure',v=>v+' initiative'+(v===1?'':'s'))}${c.trendOn==='exposure'?trend:''}</span>`;
+  }else if(c.level==='initiatives'){
+    chip=`<span class="chip ${c.chip}">${c.chip}</span>`;
+    const rests=c.rests.map(id=>{const a=byId(id)||{title:id};return a.title.split(' ').slice(0,3).join(' ')+'…';}).join(', ');
+    fields=`<span class="k">shipped</span><span class="v">${diff('pct',v=>v+'%')}${c.trendOn==='pct'?trend:''}</span><span class="k">rests on</span><span class="v" title="${c.rests.map(id=>(byId(id)||{}).title).join(' · ')}">${rests}</span>${c.trigger?`<span class="k">trigger</span><span class="v" title="${c.trigger}">${c.triggerHit?'<span class="flag">⚑ hit · </span>':''}${c.trigger}</span>`:''}`;
+  }else{
+    fields=`<span class="k">${c.level==='code'?'files':'note'}</span><span class="v" title="${c.note}">${c.note}</span>`;
+  }
+  const statusHtml=c._status?`<span class="spin"></span><span>${c._status}</span><span class="note">${c._note||''}</span>`:(s.changed[c.id]?`<span>changed</span><span class="note">${s.changed[c.id]}</span>`:'');
+  el.innerHTML=`<div class="card-head"><h4>${c.title}</h4>${chip}</div><div class="fields">${fields}</div><div class="status">${statusHtml}</div>`;
+  if(open[c.id]) el.appendChild(renderDetail(c));
+  return el;
+}
+
+function renderDetail(c){
+  const d=document.createElement('div'); d.className='detail';
+  const src=(c.sources||[]).map(k=>{const x=SRC[k];return `<li>${x.u?`<a href="${x.u}" target="_blank" rel="noopener">${x.t}</a>`:x.t}</li>`;}).join('');
+  let html=`<div><h5>Evidence (${(c.sources||[]).length})</h5>${src?`<ul>${src}</ul>`:'<div class="none">⊘ no evidence attached</div>'}</div>`;
+  if(c.signposts) html+=`<div><h5>Signposts</h5><ul>${c.signposts.map(s=>`<li>${s}</li>`).join('')}</ul></div>`;
+  if(c.level==='assumptions'){
+    const deps=state.cards.filter(i=>i.rests&&i.rests.includes(c.id));
+    html+=`<div><h5>Initiatives resting on this</h5>${deps.length?`<ul>${deps.map(i=>`<li>${i.title} · ${i.pct}%</li>`).join('')}</ul>`:'<div class="none">none · this bet is floating free of any action</div>'}</div>`;
+  }
+  if(c.rests) html+=`<div><h5>Rests on</h5><ul>${c.rests.map(id=>{const a=byId(id);return `<li>${a?a.title+' · ev '+dots(a.ev):id}</li>`;}).join('')}</ul></div>`;
+  if(c.analogue){const a=ANALOGUES[c.analogue];html+=`<div><h5>Prior strategy</h5><div class="analogue"><span class="t">${a.t}</span><span class="k">commoditised</span><span>${a.what}</span><span class="k">value moved to</span><span>${a.where}</span><span class="k">survivor tracked</span><span>${a.tracked}</span><span class="k">loser believed</span><span>${a.believed}</span></div></div>`;}
+  html+=`<div><h5>History</h5>${c.hist.length?`<ul class="hist">${c.hist.map(h=>`<li>${h}</li>`).join('')}</ul>`:'<div class="none">no changes recorded</div>'}</div>`;
+  d.innerHTML=html; return d;
+}
+
+function renderSnaps(){
+  const w=$('#snaps'); w.innerHTML='<span class="lbl">snapshots</span>';
+  snapshots.forEach((s,i)=>{const b=document.createElement('button');b.className='snap'+(viewing===i?' active':'');b.textContent=s.name;b.dataset.i=i;w.appendChild(b);});
+  const now=document.createElement('button'); now.className='snap now'+(viewing===null?' active':''); now.textContent='now'; now.dataset.i='now'; w.appendChild(now);
+}
+
+/* ---------- log ---------- */
+function logEntry(kind,title){
+  const e=document.createElement('div'); e.className='entry';
+  const t=new Date().toTimeString().slice(0,5);
+  e.innerHTML=`<div class="eh"><span>${t}</span><span class="kind">${kind}</span><b>${title}</b></div>`;
+  $('#log').prepend(e); return e;
+}
+async function logLine(e,text,cls='',ms=260){
+  const l=document.createElement('div'); l.className='l '+cls; l.innerHTML=text; e.appendChild(l); await sleep(ms);
+}
+const cite=k=>SRC[k].u?`<span class="src">· <a href="${SRC[k].u}" target="_blank" rel="noopener">source</a></span>`:'';
+
+/* ---------- runner ---------- */
+function setJob(title,meta,pct){
+  $('#job').hidden=false; $('#jobtitle').textContent=title; $('#jobmeta').innerHTML=meta; $('#jobbar').style.width=(pct||0)+'%';
+}
+function endJob(){ $('#job').hidden=true; }
+function levelEl(id){return document.querySelector(`.level[data-level="${id}"]`);}
+function cardEl(id){return document.querySelector(`.card[data-id="${id}"]`);}
+
+async function sizing(plan){
+  running=true; abort=false;
+  setJob('Sizing change…','scanning all levels',5);
+  for(const L of LEVELS) levelEl(L.id).classList.add('scanning');
+  await sleep(1100);
+  if(abort) return false;
+  for(const L of LEVELS) levelEl(L.id).classList.remove('scanning');
+  const dir=plan.dir==='up'?'bottom-up':'top-down';
+  setJob(`Reaches ${plan.levels.length} level${plan.levels.length===1?'':'s'} · ${dir}`,`touches: ${plan.touches} &nbsp;·&nbsp; <span style="color:var(--warn)">2s to intervene</span>`,12);
+  const entry=plan.dir==='up'?'code':'world';
+  levelEl(entry).querySelector('[data-entry]').textContent='◀ entered here';
+  await sleep(2000);
+  return !abort;
+}
+
+async function prepare(id,status,note,ms=700){
+  const c=byId(id); c._status=status; c._note=note; render(); await sleep(ms);
+}
+async function settle(id,mutate,why){
+  const c=byId(id); c._status=null; c._note=null; mutate(c); state.changed[id]=why; render(); await sleep(350);
+}
+function touchLevel(id){ state.expanded[id]=true; }
+
+/* Event 1: milestone, bottom-up */
+async function runMilestone(text){
+  for(const c of state.cards){c.trend=null;c.trendOn=null;}
+  const e=logEntry('milestone',text);
+  await logLine(e,'sizing…');
+  const ok=await sizing({dir:'up',levels:['code','product','initiatives','assumptions'],touches:'1 milestone, 2 product flows, 1 initiative, 2 assumptions'});
+  if(!ok){await logLine(e,'stopped before running','warn');return finish();}
+  await logLine(e,'reaches 4 levels, bottom-up · world not touched','sig');
+  let done=0,total=7; const prog=()=>setJob(`Reaches 4 levels · ${done}/${total} cells done`,'bottom-up · milestone',12+done/total*88);
+
+  touchLevel('code'); render();
+  await prepare('c1','Reading…','api/giving/* · 14 files');
+  await settle('c1',c=>{c.title='Milestone: agent giving API v1';c.note='14 files · api/giving/* · Oct 2026';c.hist.push('Oct 10: agent giving API v1 shipped');},'14 files'); done++;prog();
+  await logLine(e,'code: api/giving/* · 14 files · 3 commits since last milestone');
+
+  touchLevel('product'); render();
+  await prepare('p1','Preparing…','which flows does this change?');
+  await prepare('p2','Preparing…','which flows does this change?',300);
+  await settle('p1',c=>{c.note='cause search now exposed to agents';c.hist.push('Oct 10: agent endpoint added');},'agent endpoint'); done++;prog();
+  await settle('p2',c=>{c.note='verified-partner data readable by agents';c.hist.push('Oct 10: partner data exposed to agents');},'partner data'); done++;prog();
+  await logLine(e,'product: donor discovery flow and partner search now expose data to agents · giving app unchanged');
+
+  touchLevel('initiatives'); render();
+  await prepare('i1','Preparing…','recomputing shipped % from milestone');
+  await settle('i1',c=>{c.pct=70;c.trend='↑';c.trendOn='pct';c.hist.push('Oct 10: 20% → 70%');},'20% → 70%'); done++;prog();
+  await logLine(e,'initiative: agent-facing giving API 20% → 70% · health stays <b>hedge</b> (one scenario, two assumptions)','sig');
+
+  touchLevel('assumptions'); render();
+  await prepare('a1','Preparing…','recomputing exposure from initiatives that rest on this');
+  await prepare('a2','Preparing…','recomputing exposure from initiatives that rest on this',200);
+  await settle('a1',c=>{c.exposure=2;c.trend='↑';c.trendOn='exposure';c.hist.push('Oct 10: exposure 1 → 2 (agent API 70%)');},'exposure ↑'); done++;prog();
+  await logLine(e,`assumption “AI assistants mediate discovery”: exposure ↑. 70% of an initiative now rests on it. Evidence unchanged: no new sources found ${cite('bluestate')}`);
+  await settle('a2',c=>{c.exposure=1;c.trend='↑';c.trendOn='exposure';c.hist.push('Oct 10: exposure 0 → 1 (agent API now depends on this vendor)');},'now load-bearing'); done++;prog();
+  await logLine(e,`assumption “vendor stays available”: exposure 0 → 1 <b>⚠</b> · a low-evidence prediction (●●●○○) now carries a live bet. The trigger on the API initiative covers this; no action until a signpost moves ${cite('bis')}`,'warn');
+  await logLine(e,'world: no scenario moved. The code changed your position, not the world.');
+  state.expanded.product=false; state.expanded.code=false;
+  render(); finish();
+}
+
+/* Event 2: world update, top-down */
+async function runWorld(){
+  for(const c of state.cards){c.trend=null;c.trendOn=null;}
+  const e=logEntry('world','signpost crossed · frontier vendor availability');
+  await logLine(e,`evidence: ${SRC.bis.t} ${cite('bis')}`);
+  await logLine(e,'sizing…');
+  const ok=await sizing({dir:'down',levels:['world','assumptions','initiatives'],touches:'1 scenario, 1 assumption, 1 initiative'});
+  if(!ok){await logLine(e,'stopped before running','warn');return finish();}
+  await logLine(e,'reaches 3 levels, top-down · product and code not touched','sig');
+  let done=0,total=3; const prog=()=>setJob(`Reaches 3 levels · ${done}/${total} cells done`,'top-down · world',12+done/total*88);
+
+  await prepare('w2','Preparing…','re-reading signposts for this scenario');
+  await settle('w2',c=>{c.f.signposts='2 / 4 hit';c.f.lastMoved='Oct 2026';c.chip='rising';c.trend='↑';c.hist.push('Oct 10: signpost “vendor availability incident > 72h” hit');},'watch → rising'); done++;prog();
+  await logLine(e,'scenario “Walled Gardens”: 1/4 → 2/4 signposts · <b>watch → rising</b>','sig');
+
+  await prepare('a2','Preparing…','re-weighing evidence for this prediction');
+  await settle('a2',c=>{c.ev=1;c.trend='↓';c.trendOn='ev';c.hist.push('Oct 10: ev ●●●○○ → ●○○○○ (19-day suspension)');},'evidence ↓'); done++;prog();
+  await logLine(e,'assumption “vendor stays available”: evidence ●●●○○ → ●○○○○. Belief unchanged at ●●●●○. <b>⚠ the gap is now 3</b>: either lower the belief with a reason, or say why the evidence does not apply to you.','warn');
+
+  await prepare('i1','Preparing…','checking triggers against new signpost reading');
+  await settle('i1',c=>{c.chip='fragile';c.triggerHit=true;c.trend='↓';c.hist.push('Oct 10: trigger hit · hedge → fragile');},'⚑ trigger hit'); done++;prog();
+  await logLine(e,'initiative “agent-facing giving API”: <b>⚑ trigger hit</b> · outage > 72h on primary model → revisit: add a second provider. Health hedge → fragile.','warn');
+  await logLine(e,`prior strategy: app stores, 2008– · the platform sets the terms. Open the assumption card for the full case ${cite('rand')}`);
+  await logLine(e,'product and code: unchanged. The world moved; your position did not.');
+  render(); finish();
+}
+
+/* Event 3: inspect repo → milestone */
+async function runInspect(){
+  const e=logEntry('inspect','look at the repo');
+  await logLine(e,'reading repo · 3 commits since last milestone · api/giving/*, 14 files',"",500);
+  await logLine(e,'running the product · screenshots: donor discovery flow, partner search',"",700);
+  await logLine(e,'summary written for you: “shipped the agent-facing giving API: cause search and partner data now readable by agents”','sig',600);
+  await runMilestone('shipped the agent-facing giving API (from repo)');
+}
+
+/* Fallback: unmatched text → one unplaced card */
+async function runUnplaced(text){
+  const e=logEntry('tell',text);
+  await logLine(e,'sizing…');
+  const ok=await sizing({dir:'down',levels:['assumptions'],touches:'nothing in the stack matches'});
+  if(!ok){await logLine(e,'stopped before running','warn');return finish();}
+  const id='u'+Date.now();
+  state.cards.splice(state.cards.findIndex(c=>c.level==='initiatives'),0,{id,level:'assumptions',title:text,kind:'unplaced',ev:0,us:0,exposure:0,sources:[],hist:['Oct 10: created from prompt, unplaced']});
+  state.changed[id]='where does this go?';
+  await logLine(e,'no match in the stack · 1 <b>unplaced</b> card created at Assumptions with no evidence and no belief. Nothing else was touched.','warn');
+  await logLine(e,'next: attach a source, link an initiative, or delete it. The agent does not invent cards to make text fit.');
+  render(); finish();
+}
+
+/* Ask: highlight referenced cards */
+async function runAsk(q){
+  const e=logEntry('ask',q);
+  const words=q.toLowerCase().replace(/[?.,]/g,'').split(/\s+/).filter(w=>w.length>3);
+  const hits=state.cards.filter(c=>words.some(w=>c.title.toLowerCase().includes(w)));
+  hits.forEach(c=>cardEl(c.id)&&cardEl(c.id).classList.add('hl'));
+  if(hits.length){
+    const c=hits[0];
+    if(c.level==='initiatives') await logLine(e,`“${c.title}” is <b>${c.chip}</b> because it rests on ${c.rests.map(id=>`“${byId(id).title}” (ev ${dots(byId(id).ev)})`).join(' and ')}. ${c.triggerHit?'Its trigger has been hit.':'Its trigger has not been hit.'} Nothing changed.`);
+    else if(c.level==='assumptions') await logLine(e,`“${c.title}”: evidence ${dots(c.ev)}, belief ${dots(c.us)}, ${c.exposure} initiative(s) rest on it. ${(c.sources||[]).length} sources attached. Nothing changed.`);
+    else await logLine(e,`“${c.title}”: ${c.note||c.sub||''}. Nothing changed.`);
+  } else await logLine(e,'no card in the stack matches that question. Nothing changed.','warn');
+  setTimeout(()=>document.querySelectorAll('.card.hl').forEach(x=>x.classList.remove('hl')),3000);
+}
+
+function finish(){ running=false; endJob(); document.querySelectorAll('[data-entry]').forEach(x=>x.textContent=''); }
+
+/* ---------- routing ---------- */
+async function handle(text){
+  if(running||viewing!==null) return;
+  const t=text.trim(); if(!t) return;
+  $('#prompt').value='';
+  if(/\?\s*$/.test(t)||/^(why|what|which|how)\b/i.test(t)) return runAsk(t);
+  if(/repo|inspect|look at the code/i.test(t)) return runInspect();
+  if(/world update|signpost|vendor|outage|export/i.test(t)) return runWorld();
+  if(/ship|api|agent|milestone|launch/i.test(t)) return runMilestone(t);
+  return runUnplaced(t);
+}
+
+/* ---------- wiring ---------- */
+const HINTS=[['shipped the agent-facing giving API','milestone · bottom-up'],['world update','signpost crossed · top-down'],['look at the repo','agent reads code, writes the prompt'],['why is SEO fragile?','ask · nothing changes'],['donors will want AI to pick causes for them','unmatched · one unplaced card']];
+const hw=$('#hints'); HINTS.forEach(([t,title])=>{const b=document.createElement('button');b.className='hint';b.textContent=t;b.title=title;b.onclick=()=>handle(t);hw.appendChild(b);});
+$('#form').addEventListener('submit',ev=>{ev.preventDefault();handle($('#prompt').value);});
+$('#stop').onclick=()=>{abort=true;};
+document.addEventListener('keydown',ev=>{
+  if((ev.metaKey||ev.ctrlKey)&&ev.key.toLowerCase()==='k'){ev.preventDefault();$('#prompt').focus();}
+  if(ev.key==='Escape'&&running){abort=true;}
+});
+$('#stack').addEventListener('click',ev=>{
+  const ex=ev.target.closest('[data-expand]'); if(ex){ (viewing===null?state:snapshots[viewing].state).expanded[ex.dataset.expand]=true; render(); return; }
+  if(ev.target.closest('a')) return;
+  const card=ev.target.closest('.card'); if(!card) return;
+  open[card.dataset.id]=!open[card.dataset.id]; render();
+});
+$('#snaps').addEventListener('click',ev=>{
+  const b=ev.target.closest('.snap'); if(!b||running) return;
+  viewing=b.dataset.i==='now'?null:+b.dataset.i; render();
+});
+$('#cmp').onclick=()=>{compare=!compare;render();};
+$('#save').onclick=()=>{
+  if(running||viewing!==null) return;
+  const name=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+  snapshots.push({name,state:clone(state),at:new Date().toISOString()});
+  const e=logEntry('snapshot',name);
+  const n=Object.keys(state.changed).length;
+  const noEv=state.cards.filter(c=>c.level==='assumptions'&&Math.abs(c.ev-c.us)>=2).length;
+  logLine(e,`saved · ${n} cards changed since “${snapshots[snapshots.length-2].name}” · ${noEv} belief${noEv===1?'':'s'} out of step with evidence`,noEv?'warn':'sig');
+  for(const c of state.cards){c.trend=null;c.trendOn=null;}
+  state.changed={}; render();
+};
+
+/* first log entry */
+(function(){
+  const e=logEntry('snapshot','Jul');
+  logLine(e,'baseline · 2 scenarios, 4 assumptions, 3 initiatives · 12 sources on the shelf',"sig",0);
+  logLine(e,'signposts set in July, before any of them moved',"",0);
+})();
+render();
+</script>
