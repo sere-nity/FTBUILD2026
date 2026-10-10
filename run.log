@@ -140,3 +140,29 @@ Iteration 10 done. Check 22 ticked with evidence.
 **Commits:** `0c17ca9` feat + spec + shots + tick; `beab915` PROGRESS.
 
 **Next:** check 23. `proposed` ghost of old value does not exist yet. Also known gap: runner never reads `store.abort` after window, so Esc mid-run no-op until end. Fold into 23/24.
+autosaved
+=== iteration 10  01:53:12 ===
+Iteration 11 done. Check 23 ticked with evidence, four commits on `main`.
+
+**What changed**
+- `proposed` state built: `settle()` keeps old values of ghosted fields in `_prev`, card shows them struck through beside the new value for 600ms, ghost fades 300ms (`.ghost.out`, none under reduced motion), then card redraws settled with ↑/↓ and accent rule.
+- `preparing` class now applied from `_phase` (CSS existed, never set).
+- Esc/Stop mid-run now works. `tick()` throws out of next pause; settled cells keep values, in-flight cell cleaned, log says `stopped after k/n cells`. Gap from iteration 10 closed.
+- `TIMING.settle` replaced by `proposed` + `ghostFade`. Flow A ~3s longer.
+
+**Verify**
+- New `verify/cells.spec.ts`: per-frame watcher records phase changes and ghost opacity per card. 192 tests pass across four projects.
+- Measured: proposed hold 900–960ms, ghost solid ≥450ms then ~300ms slope to <0.2. Reduced motion: opacity only 1 or 0.
+- Read 9 screenshots. All states render correctly at desktop/phone, light/dark.
+
+**Decisions logged in PROGRESS.md**
+- Ghost = strikethrough (reference compare style), no `→` glyph.
+- Code/product cards ghost nothing (text-only change, would truncate).
+- `done` counts at `proposed` so stop mid-ghost reports what screen shows.
+
+**Design review, new items**
+- Job header not sticky. Following the change down to Code loses `k/6 cells done` and Stop. Top UX candidate.
+- Proposed card states the move twice (field ghost + status row).
+- New value jumps left when faded ghost is removed.
+
+**Next**: check 24, log line in sync with cell settle. Runner already emits each line right after `settle()` returns; needs timestamped ordering assertion.
