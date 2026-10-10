@@ -1,0 +1,150 @@
+{
+  "cards": [
+    {
+      "id": "w1",
+      "level": "world",
+      "title": "Agent Concierge",
+      "sub": "agents · cheap intelligence",
+      "chip": "live",
+      "f": { "signposts": "3 / 4 hit", "lastMoved": "Sep 2026" },
+      "sources": ["similarweb", "bluestate", "epoch"],
+      "signposts": [
+        "AI chatbot share of referrals > 1% (Statcounter)",
+        "AI referrals to our site > 5% of new-donor sessions (GA4)",
+        "price per capability halving within 6 months (Epoch)",
+        "agent payment rails in a UK provider"
+      ],
+      "hist": []
+    },
+    {
+      "id": "w2",
+      "level": "world",
+      "title": "Walled Gardens",
+      "sub": "agents · gated intelligence",
+      "chip": "watch",
+      "f": { "signposts": "1 / 4 hit", "lastMoved": "Jun 2026" },
+      "sources": ["bis"],
+      "signposts": [
+        "frontier vendor availability incident > 72h",
+        "single platform > 50% of gen-AI traffic",
+        "export-control or licensing action affecting UK",
+        "enterprise model allowlists tighten"
+      ],
+      "hist": []
+    },
+    {
+      "id": "a1",
+      "level": "assumptions",
+      "title": "AI assistants will mediate how donors find causes",
+      "kind": "interpretation",
+      "ev": 3,
+      "us": 4,
+      "exposure": 1,
+      "sources": ["bluestate", "similarweb", "pew", "footprint"],
+      "analogue": "classifieds",
+      "hist": ["Jul: ev ●●○○○ → ●●●○○ (Blue State data)"]
+    },
+    {
+      "id": "a2",
+      "level": "assumptions",
+      "title": "Our AI vendor stays available on current terms",
+      "kind": "prediction",
+      "ev": 3,
+      "us": 4,
+      "exposure": 0,
+      "sources": ["bis"],
+      "analogue": "appstore",
+      "hist": []
+    },
+    {
+      "id": "a3",
+      "level": "assumptions",
+      "title": "Organic search keeps bringing new donors",
+      "kind": "interpretation",
+      "ev": 2,
+      "us": 3,
+      "exposure": 1,
+      "sources": ["pew", "bluestate"],
+      "analogue": "seo",
+      "hist": ["Jul: us ●●●●○ → ●●●○○ (team review)"]
+    },
+    {
+      "id": "a4",
+      "level": "assumptions",
+      "title": "Donors trust institutions over AI answers",
+      "kind": "fact",
+      "ev": 4,
+      "us": 4,
+      "exposure": 1,
+      "sources": ["genrep", "fai"],
+      "analogue": "travel",
+      "hist": []
+    },
+    {
+      "id": "i1",
+      "level": "initiatives",
+      "title": "Agent-facing giving API",
+      "pct": 20,
+      "rests": ["a1", "a2"],
+      "chip": "hedge",
+      "trigger": "if primary-model outage > 72h → add a second provider",
+      "hist": []
+    },
+    {
+      "id": "i2",
+      "level": "initiatives",
+      "title": "Giving-discovery SEO",
+      "pct": 80,
+      "rests": ["a3"],
+      "chip": "fragile",
+      "trigger": "if AI referrals > 20% of new-donor sessions → revisit SEO budget",
+      "hist": []
+    },
+    {
+      "id": "i3",
+      "level": "initiatives",
+      "title": "Open, citable charity data",
+      "pct": 50,
+      "rests": ["a4"],
+      "chip": "robust",
+      "trigger": "",
+      "hist": []
+    },
+    {
+      "id": "p1",
+      "level": "product",
+      "title": "Donor discovery flow",
+      "note": "cause search, CauseFinder listing",
+      "hist": []
+    },
+    {
+      "id": "p2",
+      "level": "product",
+      "title": "Partner search",
+      "note": "verified-partner directory",
+      "hist": []
+    },
+    {
+      "id": "p3",
+      "level": "product",
+      "title": "Giving app",
+      "note": "Pay by Bank, Gift Aid summaries",
+      "hist": []
+    },
+    {
+      "id": "c1",
+      "level": "code",
+      "title": "Last milestone: Pay by Bank",
+      "note": "6 files · payments/* · Sep 2026",
+      "hist": []
+    }
+  ],
+  "expanded": {
+    "world": true,
+    "assumptions": true,
+    "initiatives": true,
+    "product": false,
+    "code": false
+  },
+  "changed": {}
+}

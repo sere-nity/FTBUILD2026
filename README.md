@@ -4,14 +4,29 @@ The framework with a memory: a living strategy stack that tracks which AI future
 
 Built for Stewardship at BUILD 26. This README is replaced by the build agent as the project grows; see SPEC.md for the product and CLAUDE.md for how the autonomous build runs.
 
+## Quick start
+
+```bash
+npm install
+npm run dev        # Vite dev server on http://localhost:5173
+npm run build      # TypeScript check + production build
+npm run verify     # Playwright tests at desktop + phone, light + dark
+```
+
+## Project structure
+
+- `src/` — TypeScript source: `main.ts`, `state.ts`, `render.ts`, `bar.ts`, `log.ts`, `runner/`
+- `data/seed.json` — editable card data (2 scenarios, 4 assumptions, 3 initiatives, 3 product flows, 1 milestone)
+- `data/sources.json` — 12 curated evidence sources
+- `data/analogues.json` — 6 prior-strategy cases
+- `verify/` — Playwright specs + `shots/` screenshots + `REPORT.md`
+- `reference/waypoint.html` — single-file prototype to match, then exceed
+
 ## Kit contents
-- `CLAUDE.md` operating rules for the unattended build (loop, verify, commit, UX self-improvement)
-- `SPEC.md` the product spec, data model, flows, look, backlog
-- `CHECKS.md` the acceptance list the agent ticks with evidence
+- `CLAUDE.md` operating rules for the unattended build
+- `SPEC.md` product spec, data model, flows, look, backlog
+- `CHECKS.md` acceptance list the agent ticks with evidence
 - `PROGRESS.md` iteration journal and UX log
-- `PROMPT.md` the per-iteration prompt
-- `run.sh` the overnight loop
-- `reference/waypoint.html` the single-file prototype the build must match, then exceed. Open it in a browser and click the hint chips.
 
 ## Run the overnight build
 ```

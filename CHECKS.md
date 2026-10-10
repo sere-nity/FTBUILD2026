@@ -3,10 +3,10 @@
 Tick a box only when `npm run verify` evidence (assertions + screenshots you have looked at) shows it passes. Mark `blocked: <reason>` after three failed iterations and move on.
 
 ## Scaffold
-- [ ] Vite + TypeScript project builds and serves; `npm run dev`, `npm run build`, `npm run verify` exist
-- [ ] Playwright installed; a smoke test loads the page and screenshots it at 1280×800 and 400×800
-- [ ] `data/seed.json`, `data/sources.json`, `data/analogues.json` ported verbatim from `reference/waypoint.html`
-- [ ] First commit on `main` with README stub
+- [x] Vite + TypeScript project builds and serves; `npm run dev`, `npm run build`, `npm run verify` exist
+- [x] Playwright installed; a smoke test loads the page and screenshots it at 1280×800 and 400×800
+- [x] `data/seed.json`, `data/sources.json`, `data/analogues.json` ported verbatim from `reference/waypoint.html`
+- [x] First commit on `main` with README stub
 
 ## Stack and cards
 - [ ] Five levels render top to bottom: World, Assumptions, Initiatives, Product, Code

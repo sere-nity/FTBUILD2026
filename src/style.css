@@ -1,0 +1,113 @@
+:root {
+  --paper: #f6f7f8;
+  --ink: #17191c;
+  --ink-2: #4a4f58;
+  --ink-3: #8a8f99;
+  --rule: #d9dce2;
+  --card: #ffffff;
+  --card-2: #eef0f3;
+  --signal: #1d6b8f;
+  --signal-soft: #e2eef4;
+  --warn: #9a6b12;
+  --warn-soft: #f7edd5;
+  --good: #2f6b4a;
+  --display: "IBM Plex Serif", Georgia, serif;
+  --body: "IBM Plex Sans", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #121417;
+    --ink: #e8eaee;
+    --ink-2: #b4b9c3;
+    --ink-3: #737a86;
+    --rule: #2a2f37;
+    --card: #1a1d22;
+    --card-2: #22262d;
+    --signal: #6fb6d6;
+    --signal-soft: #17303c;
+    --warn: #d9a94a;
+    --warn-soft: #3a2d12;
+    --good: #7fc29b;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --paper: #121417;
+  --ink: #e8eaee;
+  --ink-2: #b4b9c3;
+  --ink-3: #737a86;
+  --rule: #2a2f37;
+  --card: #1a1d22;
+  --card-2: #22262d;
+  --signal: #6fb6d6;
+  --signal-soft: #17303c;
+  --warn: #d9a94a;
+  --warn-soft: #3a2d12;
+  --good: #7fc29b;
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.top {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 10px 20px;
+  background: var(--paper);
+  border-bottom: 1px solid var(--rule);
+}
+
+.brand {
+  font-family: var(--display);
+  font-weight: 500;
+  font-size: 17px;
+  letter-spacing: 0.01em;
+}
+
+.brand small {
+  font-family: var(--body);
+  font-weight: 400;
+  color: var(--ink-3);
+  margin-left: 8px;
+  font-size: 12px;
+}
+
+.stack {
+  padding: 18px 20px 120px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 0;
+  min-height: calc(100% - 52px);
+}
+
+@media (max-width: 860px) {
+  main { grid-template-columns: 1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}

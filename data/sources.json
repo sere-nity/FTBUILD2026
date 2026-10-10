@@ -1,0 +1,74 @@
+{
+  "bluestate": {
+    "id": "bluestate",
+    "t": "Blue State / Candid, \"Brand discovery in the age of AI\" (Nov 2025): 4.5% of donors use AI to find causes; AI traffic to nonprofit sites +1000% YoY, organic search −35%",
+    "u": "https://candid.org/blogs/how-ai-tools-affect-online-giving-research-data/",
+    "kind": "report"
+  },
+  "similarweb": {
+    "id": "similarweb",
+    "t": "Similarweb gen-AI landscape: 770.7M AI referral visits/month, +117% YoY; ChatGPT share fell from ~76% to ~53% in a year",
+    "u": "https://aisearch.similarweb.com/blog/gen-ai-stats/",
+    "kind": "data"
+  },
+  "pew": {
+    "id": "pew",
+    "t": "Pew Research (Jul 2025): users click a result on 8% of searches with an AI Overview vs 15% without; 1% click AIO citations",
+    "u": "https://www.pewresearch.org/",
+    "kind": "report"
+  },
+  "epoch": {
+    "id": "epoch",
+    "t": "Epoch AI, \"The plunging price of thought\" (2026): inference price per capability falling ~13× per year since 2023",
+    "u": "https://epoch.ai/",
+    "kind": "data"
+  },
+  "bis": {
+    "id": "bis",
+    "t": "US export-control directive (12 Jun 2026): access to Claude Fable 5 / Mythos 5 suspended worldwide; restored 1 Jul. 19 days",
+    "u": "https://www.anthropic.com/news/fable-mythos-access",
+    "kind": "report"
+  },
+  "genrep": {
+    "id": "genrep",
+    "t": "Stewardship Generosity Report 2026 (n=6,004): people who trust their church \"a lot\" make up 74% of givers; prompt-driven giving −11%",
+    "u": "https://www.stewardship.org.uk/",
+    "kind": "report"
+  },
+  "fai": {
+    "id": "fai",
+    "t": "Fundraising.AI donor survey (Aug 2025, n=1,031): top concern (34%) is AI bots posing as humans for a charity",
+    "u": "https://fundraising.ai/donor-perceptions-of-ai-2025/",
+    "kind": "report"
+  },
+  "footprint": {
+    "id": "footprint",
+    "t": "Charity AI Brand Footprint (Q3 2025): across 110 donor prompts, chatbots lean on validators (Charity Navigator, GiveWell); UK Christian causes largely absent",
+    "u": "https://nonprofitnewsfeed.com/",
+    "kind": "report"
+  },
+  "slywotzky": {
+    "id": "slywotzky",
+    "t": "Slywotzky, Value Migration (1996): value moves to the layer that stays scarce when neighbours commoditise",
+    "u": "",
+    "kind": "book"
+  },
+  "rand": {
+    "id": "rand",
+    "t": "Dewar, Assumption-Based Planning (RAND, 2002): load-bearing assumptions, signposts, hedging actions",
+    "u": "https://www.rand.org/",
+    "kind": "book"
+  },
+  "tetlock": {
+    "id": "tetlock",
+    "t": "Tetlock & Gardner, Superforecasting (2015): small frequent updates; record reasoning before outcomes",
+    "u": "",
+    "kind": "book"
+  },
+  "mcgrath": {
+    "id": "mcgrath",
+    "t": "McGrath & MacMillan, Discovery-Driven Planning (HBR 1995): write assumptions down, convert to checkpoints",
+    "u": "",
+    "kind": "article"
+  }
+}
