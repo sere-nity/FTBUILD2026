@@ -173,7 +173,7 @@ Keep it small so it survives an unattended build.
 1. Edit intent in the bar ("set belief on X to N because …"), logged as on-evidence or not.
 2. Undo per cell for the duration of a run.
 3. Per-card history timeline in the expand view, with the snapshot it belonged to.
-4. LLM runner behind `WAYPOINT_LLM=1` (see §5).
+4. LLM runner behind `WAYPOINT_LLM=1` (see §5). Built early on the client's request, 2026-10-10 (PROGRESS.md §14); real model round-trip still unverified.
 5. A second seed, `data/seed-lantern.json` (a community social app: scenarios "Agent-mediated feeds" / "Verified-identity web"; assumptions about authenticity, identity regulation, feed control; initiatives anonymous posting, verified-human badge, creator payouts) and a seed switcher in the top bar.
 6. Timeline scrubber replacing the snapshot chips, with the dotted "if this scenario wins" region past `now`.
 7. Real inspect: given a repo path, summarise the diff since the last milestone and screenshot the app (Playwright) into the Product cards.

@@ -34,6 +34,22 @@ The default runner is scripted (`src/runner/scripted.ts`): no network, no key, s
 
 Product and Code are quiet by default: one plain line each with an "expand" link. A run opens each level on the frame its first cell starts preparing, keeps it open while the ripple walks up the stack, and closes Product and Code again on the frame the header goes (after the run ends, or at once on Stop). World, Assumptions and Initiatives never change state during a run; "expand" after a run reopens a level with its changed cards and accents intact.
 
+## LLM runner (optional, `WAYPOINT_LLM=1`)
+
+Off by default. The scripted runner is the product; the model path is an optional layer on top and the demo never depends on it.
+
+```bash
+# terminal 1: the proxy that holds the key (never sent to the browser)
+ANTHROPIC_API_KEY=sk-ant-… npm run server          # http://localhost:8787, GET /api/health
+
+# terminal 2: the app with the flag on
+npm run dev:llm                                     # = WAYPOINT_LLM=1 vite; /api is proxied to :8787
+```
+
+How it works (`server/index.mjs`, `src/runner/llm.ts`): on submit, the browser dims every level ("Sizing change…") and POSTs the event, the full current state and the source shelf to `/api/plan`. The proxy makes one call to Claude (`claude-opus-5-5`, structured JSON output, refusal fallback on) and gets back a plan: direction, levels reached, the cells to touch with one mutation and one log sentence each, and one or two closing lines. The proxy then enforces the SPEC §5 guardrails before anything reaches the browser: belief (`us`) is never changed, evidence (`ev`) moves only with a source id from the shelf, unknown card or source ids are rejected or nulled, a work event may not touch World. The browser runs the checked plan through the same `prepare → proposed → settled` state machine and the same job header, intervene window and Stop as the scripted runner.
+
+If anything fails (proxy not running, no key, timeout, model declined, invalid JSON, plan rejected) the log says `llm runner unavailable (reason) · using the scripted runner` and the scripted flow runs. `verify/llm.spec.ts` asserts both that fallback and that with the flag off no `/api` request is ever made. Set `WAYPOINT_MODEL` to use a different model.
+
 ## Kit contents
 - `CLAUDE.md` operating rules for the unattended build
 - `SPEC.md` product spec, data model, flows, look, backlog
