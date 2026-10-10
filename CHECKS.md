@@ -9,9 +9,9 @@ Tick a box only when `npm run verify` evidence (assertions + screenshots you hav
 - [x] First commit on `main` with README stub
 
 ## Stack and cards
-- [ ] Five levels render top to bottom: World, Assumptions, Initiatives, Product, Code
-- [ ] Product and Code are collapsed to one plain line with "expand" on first load; the other three show cards
-- [ ] Card component renders all five level shapes from one function (title, fields, chip, trend)
+- [x] Five levels render top to bottom: World, Assumptions, Initiatives, Product, Code
+- [x] Product and Code are collapsed to one plain line with "expand" on first load; the other three show cards
+- [x] Card component renders all five level shapes from one function (title, fields, chip, trend)
 - [ ] Assumptions show separate evidence and belief dot bars; ⚠ appears when they differ by ≥ 2
 - [ ] Chips use only the enums in SPEC §3
 - [ ] Card expands in place with evidence links, "resting on this", analogue block, history; the rest of the stack doesn't shift

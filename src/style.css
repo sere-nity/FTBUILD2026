@@ -92,6 +92,7 @@ button:focus-visible, input:focus-visible, [tabindex]:focus-visible {
 .snap.active { background: var(--ink); color: var(--paper); border-color: var(--ink); }
 .snap.now { border-style: dashed; }
 .top .spacer { flex: 1; }
+.top .tools { display: flex; gap: 8px; }
 .tbtn { padding: 5px 10px; border: 1px solid var(--rule); border-radius: 6px; font-size: 12px; color: var(--ink-2); }
 .tbtn.on { background: var(--signal-soft); border-color: var(--signal); color: var(--signal); }
 .tbtn:hover { border-color: var(--ink-3); }
@@ -208,6 +209,7 @@ main {
 }
 .fields .k { color: var(--ink-3); }
 .fields .v { color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fields .v.wrap { white-space: normal; }
 .dots { letter-spacing: 1px; }
 .ghost { color: var(--ink-3); text-decoration: line-through; margin-right: 6px; }
 .arrow { color: var(--signal); margin-left: 4px; }

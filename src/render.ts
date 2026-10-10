@@ -77,7 +77,7 @@ export function renderCard(c: Card, s: State, base: State): HTMLElement {
   if (c.level === 'world') {
     chip = `<span class="chip ${c.chip}">${c.chip}</span>`;
     fields =
-      `<span class="k">axes</span><span class="v">${esc(c.sub ?? '')}</span>` +
+      `<span class="k">axes</span><span class="v wrap">${esc(c.sub ?? '')}</span>` +
       `<span class="k">signposts</span><span class="v">${diff('f', (v) => v.signposts)}${trend}</span>` +
       `<span class="k">last moved</span><span class="v">${c.f?.lastMoved ?? ''}</span>`;
   } else if (c.level === 'assumptions') {

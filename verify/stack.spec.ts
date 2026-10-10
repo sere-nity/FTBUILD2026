@@ -66,6 +66,21 @@ test.describe('stack and cards', () => {
     await expect(page.locator('.card[data-id="i3"] .fields .k')).toHaveText(['shipped', 'rests on']);
   });
 
+  test('world axes value is not truncated', async ({ page }) => {
+    const v = page.locator('.card[data-id="w1"] .fields .v').first();
+    await expect(v).toHaveText('agents · cheap intelligence');
+    const clipped = await v.evaluate((e) => e.scrollWidth > e.clientWidth);
+    expect(clipped).toBe(false);
+  });
+
+  test('top bar buttons stay on one row together', async ({ page }) => {
+    const [cmp, save] = await Promise.all([
+      page.locator('#cmp').boundingBox(),
+      page.locator('#save').boundingBox(),
+    ]);
+    expect(Math.abs(cmp!.y - save!.y)).toBeLessThan(2);
+  });
+
   test('no horizontal scroll at any width', async ({ page }) => {
     const overflow = await page.evaluate(
       () => document.documentElement.scrollWidth > document.documentElement.clientWidth,

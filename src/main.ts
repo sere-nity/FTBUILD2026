@@ -7,8 +7,10 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
     <div class="brand">Waypoint<small>Stewardship · giving platform</small></div>
     <div class="snaps" id="snaps"></div>
     <span class="spacer"></span>
-    <button class="tbtn" id="cmp" type="button">Compare to last</button>
-    <button class="tbtn" id="save" type="button">Save snapshot</button>
+    <div class="tools">
+      <button class="tbtn" id="cmp" type="button">Compare to last</button>
+      <button class="tbtn" id="save" type="button">Save snapshot</button>
+    </div>
   </header>
   <div class="job" id="job" hidden>
     <div class="line1"><span class="spin"></span><span id="jobtitle">Sizing change…</span></div>
