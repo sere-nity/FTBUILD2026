@@ -166,3 +166,24 @@ Iteration 11 done. Check 23 ticked with evidence, four commits on `main`.
 - New value jumps left when faded ghost is removed.
 
 **Next**: check 24, log line in sync with cell settle. Runner already emits each line right after `settle()` returns; needs timestamped ordering assertion.
+autosaved
+=== iteration 11  02:08:19 ===
+Iteration 12 done. Check 24 ticked with evidence, four commits on `main`.
+
+**What changed**
+- Product flows p1 and p2 now settle together via `Promise.all` in `src/runner/scripted.ts`. Before, one log line covered both but p1 sat settled ~900ms with no line. Flow A ~900ms shorter.
+- Found and fixed stop bug exposed by concurrent settles: `wait()` kept one `wake`, so Stop woke only last pause. Now set of wakers, all woken.
+- New `verify/sync.spec.ts`: per-frame watcher timestamps card phases and every log line. Asserts line never before settle, ≤150ms after, run order, cross-level sequencing, p1/p2 within 50ms, zero stack mutations 1.5s after mid-settle stop.
+
+**Evidence**
+- Settle→line gap measured 0ms, all six cells, all four viewports.
+- Negative check on old runner fails: `p1 line 900ms after settle`.
+- Full verify: 200 passed.
+- Screenshots looked at: a1 settled with its line newest in log, a2 proposed with ghost but no line yet. Report in `verify/REPORT.md`.
+
+**Design review, new items**
+- Header hits "6/6 cells done" while a2's ghost still on screen.
+- "source" link orphaned alone on last line at 320px.
+- a1/a2 log lines run 4–6 visual lines vs §7's two-line intent.
+
+**Next**: check 25 (touched levels expand, Product/Code collapse at run end). Runner already does it; needs a per-frame `expanded` watcher spec.
