@@ -38,16 +38,18 @@ Every card has the same skeleton so one component renders all of them: **title �
 
 | Level | Title | Fields | Chip (enum) | Trend |
 |---|---|---|---|---|
-| World | scenario name | axes, signposts hit (n/4), last moved | `live` `rising` `watch` `fading` | ↑ ↓ |
-| Assumptions | the proposition | **evidence** ●●●○○, **belief** ●●●○○, exposure (N initiatives) | `fact` `interpretation` `prediction` `unplaced` | ↑ ↓, ⚠ when evidence and belief differ by ≥ 2 |
-| Initiatives | name | shipped %, rests on (assumption chips), trigger | `robust` `hedge` `fragile` | ↑ ↓, ⚑ trigger hit |
+| World | scenario name | if true (axes), signposts moved (n/4), last moved | `live` `rising` `watch` `fading` | ↑ ↓ |
+| Assumptions (shown as **Beliefs**) | the proposition | **evidence** ●●●○○, **our belief** ●●●○○, riding on it (N bets) | `fact` `interpretation` `prediction` `unplaced` | ↑ ↓, ⚠ when evidence and belief differ by ≥ 2 |
+| Initiatives (shown as **Bets**) | name | shipped % (with a thin bar), depends on (belief titles), trigger | `robust` `hedge` `fragile` | ↑ ↓, ⚑ fired |
 | Product | flow or screen | one-line note | `changed` / `unchanged` | |
 | Code | milestone | files, modules, date | | |
 
 Rules:
 - Evidence and belief are **separate** five-dot bars. Never show a single blended confidence.
 - Chips come from a fixed enum. No freeform adjectives anywhere on a card.
-- Quiet levels collapse to one line of plain text (titles joined with `·`) with an "expand" link. Levels a run touches expand during the run; Product and Code collapse again when the run ends. The stack should breathe.
+- Every level header carries a one-line sub ("Which future is arriving. Scenarios move when their signposts do.") and shows "N changed" after a run. A rail on the left (one dot per level, a line through them) shows which level the run is in, which it has touched, and the direction arrow.
+- Every chip has a tooltip saying what the word means (`CHIP_HELP`).
+- Quiet levels collapse to one line of plain text (title · note per card) with a "show" link. Levels a run touches expand during the run; Product and Code collapse again when the run ends. The stack should breathe.
 - Unchanged rows stay fully legible: solid text, no spinner, no greying. "Didn't move" is information.
 
 ## 4. Data model (plain JSON in `data/seed.json`, editable by hand)
@@ -76,7 +78,7 @@ type Event    = { kind: 'milestone'|'world'|'inspect'|'tell'|'ask'|'edit'|'snaps
 type State    = { cards: Card[]; expanded: Record<Level,boolean>; changed: Record<string,string> }
 ```
 
-The seed content is in `reference/waypoint.html` (`seed()`, `SRC`, `ANALOGUES`). Port it verbatim into `data/seed.json`, then keep it there. It has: 2 scenarios, 4 assumptions, 3 initiatives, 3 product flows, 1 milestone, 12 sources, 6 prior-strategy cases.
+The seed content is in `reference/waypoint.html` (`seed()`, `SRC`, `ANALOGUES`), a Spotify demo seed since 2026-10-10 (the earlier giving-platform seed is in `reference/waypoint-v1.html`). Port it verbatim into `data/seed.json`, then keep it there. It has: 2 scenarios, 4 beliefs, 3 bets, 3 product flows, 1 milestone, 12 sources, 6 prior-strategy cases.
 
 ## 5. The runner: one pipeline, three thin inputs
 
@@ -130,21 +132,23 @@ Hard rules:
 
 ## 8. Screens and flows (what verify must drive)
 
-**Layout.** Sticky top bar: brand, snapshot chips (`Jul` … `now`), "Compare to last", "Save snapshot". Below it the job header (hidden when idle) and a read-only banner when viewing a past snapshot. Main: the stack (left) and the log (right, 320px). Floating prompt bar at the bottom with hint chips above it. `⌘K`/`Ctrl+K` focuses the bar.
+**Layout.** Sticky top bar: brand ("Waypoint · Spotify · demo seed"), snapshot chips (`Jul` … `now`), "Show what changed since last snapshot", "Save snapshot". Below it an intro strip (one paragraph, a "Try it" button that runs Flow A, a "hide" link; it goes on the first run) and the job header (hidden when idle) and a read-only banner when viewing a past snapshot. Main: the stack with its rail (left) and the log "What changed, and why" (right, 340px). Floating prompt bar at the bottom with five labelled "Try:" actions above it (You shipped something / The world moved / Let it read the code / Ask a question / Say anything). `⌘K`/`Ctrl+K` focuses the bar. The bar dims while a run is in progress or a past snapshot is shown; typing "stop" during a run stops it.
 
-**Flow A, milestone (bottom-up).** Type or click "shipped the agent-facing giving API". Expected: sizing → "Reaches 4 levels · bottom-up" → Code card updates → Product expands, 2 of 3 flows change → Initiative `agent-facing giving API` 20% → 70% ↑ → Assumptions: `AI assistants will mediate…` exposure 1 → 2 ↑, `Our AI vendor stays available…` exposure 0 → 1 ↑ with a warn log line → World untouched → Product and Code collapse → level headers show "N changed".
+**Job header copy.** Sizing: "Sizing the change…" / "How far does this reach? Looking at every level." Plan: "Reaches N levels · moving up from Code" (or "moving down from World") / "Will touch: … Type “stop” or press Esc in the next 2 seconds to cancel." and a "starts here" tag on the entry level. Running: "Reaches N levels · k/n cells done". Stopped in the window: "Stopped before anything changed." Stopped later: "Stopped after k of n cells."
 
-**Flow B, world (top-down).** "world update". Expected: evidence line with the Fable 5 suspension and a source link → "Reaches 3 levels · top-down" → `Walled Gardens` 1/4 → 2/4, watch → rising → `Our AI vendor stays available…` evidence ●●●○○ → ●○○○○ ↓, belief unchanged, ⚠ gap → `agent-facing giving API` hedge → fragile, ⚑ trigger hit → analogue line → "product and code: unchanged".
+**Flow A, milestone (bottom-up).** Type or click "shipped AI DJ v2". Expected: log entry `you shipped` → sizing → "Reaches 4 levels · moving up from Code" → Code card becomes `Milestone: AI DJ v2` · 31 files → Product expands, `AI DJ` and `Home feed` change, `Artist profile` unchanged → Bet `AI DJ v2` 60% → 100% ↑, stays hedge → Beliefs: `Listeners will let an AI assistant choose for them` riding on it 1 → 2 ↑, `Labels keep licensing on current terms` 2 → 3 ↑ with a warn log line and a source → "World: no scenario moved." → Product and Code collapse → level headers show "N changed" (World none, Beliefs 2, Bets 1, Product 2, Code 1).
 
-**Flow C, inspect.** "look at the repo". Expected: three log lines (reading repo, running product + screenshots, summary written) then Flow A.
+**Flow B, world (top-down).** "world update". Expected: entry `the world moved` · "a label changes its AI licensing terms" → "Simulated signal for the demo" line naming the signpost → sizing → "Reaches 3 levels · moving down from World" → `Artists must prove they're human` 1 / 4 → 2 / 4 moved ↑, watch → rising → `Labels keep licensing on current terms` evidence ●●●○○ → ●○○○○ ↓, belief unchanged ●●●●○, ⚠ gap, warn line with a source → `Open listening-history API for agents` ⚑ fired, hedge → fragile → `AI DJ v2` hedge → fragile → "What happened last time: app stores" line with a source → "Product and Code: unchanged."
 
-**Flow D, ask.** "why is SEO fragile?". Expected: one log entry, `Giving-discovery SEO` highlighted for ~3s, no card values change, no job header.
+**Flow C, inspect.** "look at the repo". Expected: entry `inspect` with three lines (reading the repo, running the app and taking screenshots, the prompt it wrote) then Flow A with the title "shipped AI DJ v2 (from the repo)".
 
-**Flow E, unmatched.** "donors will want AI to pick causes for them". Expected: sizing → one dashed `unplaced` card at Assumptions with ev/us 0 and "where does this go?" → warn log line → nothing else touched.
+**Flow D, ask.** "why is the API fragile?". Expected: one entry `you asked`, `Open listening-history API for agents` highlighted for ~3s, one answer line ending "Nothing changed.", no card values change, no job header.
 
-**Flow F, snapshots.** After A and B: "Save snapshot" adds a chip and a log entry with "N cards changed" and "M beliefs out of step with evidence". "Compare to last" shows struck-through old values beside new ones on changed cards. Clicking `Jul` shows the baseline read-only with a banner; clicking `now` returns.
+**Flow E, unmatched.** "listeners will pay extra for human-only playlists". Expected: entry `you said` → sizing with "Will touch: nothing in the stack matches this" → exactly one dashed `unplaced` card at Beliefs with ev/us 0, 0 bets and "where does this belong?" → warn line "Added one unplaced belief…" → "Next: attach a source…" → nothing else touched.
 
-**Flow G, expand.** Click any assumption card: evidence list with links, initiatives resting on it (or the "floating free" message), the analogue block (commoditised / value moved to / survivor tracked / loser believed), history. Click again to collapse. The rest of the stack doesn't move.
+**Flow F, snapshots.** After A and B: "Save snapshot" adds a chip named by today's date and a log entry "Saved. N cards changed since “Jul”. M beliefs out of step with the evidence." (or "Every belief is in step with its evidence."); changed marks, arrows and the rail reset. "Show what changed since last snapshot" shows struck-through old values beside new ones on changed cards. Clicking `Jul` shows the baseline read-only with the banner "Viewing the “Jul” snapshot, read-only. Click “now” to come back."; clicking `now` returns.
+
+**Flow G, expand.** Click any belief card: Evidence (n) with links (or "none attached. The bar can't move until there is some."), Signposts we set in July (world cards), Bets riding on this (or "none. You believe this but nothing you're building depends on it."), Depends on (bets), What happened last time (got cheap / value moved to / survivor watched / loser believed), History (or "no changes yet"). Click again to collapse. The rest of the stack doesn't move.
 
 Each flow is a Playwright script with DOM assertions at each named step and a screenshot per step, at desktop and phone width, light and dark.
 

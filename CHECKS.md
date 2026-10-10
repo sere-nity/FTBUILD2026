@@ -9,8 +9,10 @@ Tick a box only when `npm run verify` evidence (assertions + screenshots you hav
 - [x] First commit on `main` with README stub
 
 ## Stack and cards
+- [ ] Rail: one dot per level; the active level's dot fills and shows the direction arrow; touched levels stay filled until the next snapshot
+- [ ] Intro strip on first load; goes on the first run or on "hide"
 - [x] Five levels render top to bottom: World, Assumptions, Initiatives, Product, Code
-- [x] Product and Code are collapsed to one plain line with "expand" on first load; the other three show cards
+- [x] Product and Code are collapsed to one plain line with "show" on first load; the other three show cards
 - [x] Card component renders all five level shapes from one function (title, fields, chip, trend)
 - [x] Assumptions show separate evidence and belief dot bars; ⚠ appears when they differ by ≥ 2
 - [x] Chips use only the enums in SPEC §3
@@ -28,16 +30,16 @@ Tick a box only when `npm run verify` evidence (assertions + screenshots you hav
 - [ ] Level headers show "N changed" after a run
 
 ## Flows (SPEC §8), each at desktop + phone, light + dark, with screenshots per step
-- [ ] Flow A milestone: exact outcomes in §8
+- [ ] Flow A milestone: exact outcomes in §8 (Spotify seed: AI DJ v2)
 - [ ] Flow B world: exact outcomes in §8, including the ⚠ evidence/belief gap and ⚑ trigger
 - [ ] Flow C inspect: three preamble lines then Flow A
-- [ ] Flow D ask: highlight only, no values change, no job header
+- [ ] Flow D ask: highlight only, one line ending "Nothing changed.", no job header
 - [ ] Flow E unmatched: exactly one dashed `unplaced` card, nothing else touched
 - [ ] Flow F snapshots: save adds chip + log entry with counts; compare shows struck-through old values; viewing `Jul` is read-only with banner; `now` returns
 - [ ] Flow G expand/collapse
 
 ## Bar
-- [ ] Hint chips above the bar run each flow on click
+- [ ] The five labelled Try actions above the bar run each flow on click; the intro's "Try it" runs Flow A and the strip hides
 - [ ] Intent routing: ask / inspect / world / milestone / unmatched as in SPEC §5
 - [ ] ⌘K / Ctrl+K focuses the bar; Enter submits; input clears after submit
 - [ ] Bar is disabled (visibly) while a run is in progress or a past snapshot is being viewed
