@@ -6,10 +6,10 @@ import { render } from '../render';
 import { logEntry, logLine, cite } from '../log';
 import { TIMING } from './timing';
 
-type Plan = { kind: string; dir: Direction; levels: Level[]; touches: string };
+export type Plan = { kind: string; dir: Direction; levels: Level[]; touches: string };
 
 /** Thrown out of `tick()` when the user stops a run that has already started changing things. */
-const STOPPED = Symbol('stopped');
+export const STOPPED = Symbol('stopped');
 
 /** Every pause in flight. Cells in one level settle concurrently, so there can be more than one. */
 const wakers = new Set<() => void>();
@@ -22,7 +22,7 @@ export function stop(): void {
 }
 
 /** Sleep that ends early when `stop()` is called. Resolves true if stopped. */
-function wait(ms: number): Promise<boolean> {
+export function wait(ms: number): Promise<boolean> {
   if (store.abort) return Promise.resolve(true);
   return new Promise((resolve) => {
     const done = (stopped: boolean) => {
@@ -37,7 +37,7 @@ function wait(ms: number): Promise<boolean> {
 }
 
 /** A pause inside the running phase. Throws STOPPED so the flow unwinds to its catch. */
-async function tick(ms: number): Promise<void> {
+export async function tick(ms: number): Promise<void> {
   if (await wait(ms)) throw STOPPED;
 }
 
@@ -45,18 +45,29 @@ async function tick(ms: number): Promise<void> {
  * classify: dim every level while the plan is sized, then show the plan and hold for the
  * intervene window. Returns false if the user stopped, in which case nothing has changed.
  */
-async function sizing(plan: Plan): Promise<boolean> {
+export async function sizing(plan: Plan): Promise<boolean> {
+  startSizing(plan);
+  if (await wait(TIMING.scanning)) return false;
+  return holdPlan(plan);
+}
+
+/** First half of classify: dim every level and show "Sizing change…". The plan may still be a placeholder. */
+export function startSizing(plan: Plan): void {
   store.abort = false;
   store.job = { ...plan, phase: 'sizing', done: 0, total: 0 };
   render();
-  if (await wait(TIMING.scanning)) return false;
-  store.job.phase = 'intervene';
+}
+
+/** Second half of classify: show the (final) plan and hold the intervene window. False if stopped. */
+export async function holdPlan(plan: Plan): Promise<boolean> {
+  if (!store.job || store.abort) return false;
+  store.job = { ...store.job, ...plan, phase: 'intervene' };
   render();
   return !(await wait(TIMING.intervene));
 }
 
 /** preparing: spinner + one-line note of what the agent is doing for this cell. */
-async function prepare(id: string, status: string, note: string, ms: number = TIMING.prepare): Promise<void> {
+export async function prepare(id: string, status: string, note: string, ms: number = TIMING.prepare): Promise<void> {
   const c = byId(id)!;
   c._phase = 'preparing';
   c._status = status;
@@ -72,7 +83,7 @@ async function prepare(id: string, status: string, note: string, ms: number = TI
  * moved, accent rule kept via `changed`. The caller's log line follows the settle directly:
  * the last `render()` here and the line's append happen in the same task, so they share a frame.
  */
-async function settle(id: string, mutate: (c: Card) => void, why: string): Promise<void> {
+export async function settle(id: string, mutate: (c: Card) => void, why: string): Promise<void> {
   const c = byId(id)!;
   const before = clone(c);
   delete c._status;
@@ -100,13 +111,13 @@ function fadeGhosts(id: string): void {
   for (const g of document.querySelectorAll(`.card[data-id="${id}"] .ghost`)) g.classList.add('out');
 }
 
-function touchLevel(id: Level): void {
+export function touchLevel(id: Level): void {
   store.state.expanded[id] = true;
   render();
 }
 
 /** Arrows from the previous run go when a new one starts to change things. */
-function clearTrends(): void {
+export function clearTrends(): void {
   for (const c of store.state.cards) {
     delete c.trend;
     delete c.trendOn;
@@ -114,7 +125,7 @@ function clearTrends(): void {
 }
 
 /** End the run. Leaves no transient keys on any card, so a stopped run is a no-op on state. */
-function finish(): void {
+export function finish(): void {
   store.job = null;
   store.abort = false;
   for (const c of store.state.cards) {
@@ -131,7 +142,7 @@ function finish(): void {
  * `tick`: cells already settled keep their new values, the cell in flight loses its spinner
  * or ghost, quiet levels collapse, and the log says how far it got.
  */
-async function running(e: HTMLElement, body: () => Promise<void>): Promise<void> {
+export async function running(e: HTMLElement, body: () => Promise<void>): Promise<void> {
   try {
     await body();
   } catch (err) {
@@ -148,10 +159,10 @@ async function running(e: HTMLElement, body: () => Promise<void>): Promise<void>
   finish();
 }
 
-/** Event 1: milestone, bottom-up (Flow A). */
-export async function runMilestone(text: string): Promise<void> {
+/** Event 1: milestone, bottom-up (Flow A). `entry` lets a caller (the LLM fallback) continue its own log entry. */
+export async function runMilestone(text: string, entry?: HTMLElement): Promise<void> {
   if (store.job) return;
-  const e = logEntry('milestone', text);
+  const e = entry ?? logEntry('milestone', text);
   await logLine(e, 'sizing…');
   const ok = await sizing({
     kind: 'milestone',

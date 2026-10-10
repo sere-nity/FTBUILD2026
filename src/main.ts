@@ -4,6 +4,7 @@ import { render } from './render';
 import { initBar, setSubmit, classify } from './bar';
 import { initLog } from './log';
 import { runMilestone, stop } from './runner/scripted';
+import { runLLM, llmEnabled } from './runner/llm';
 
 const app = document.querySelector<HTMLDivElement>('#app')!;
 app.innerHTML = `
@@ -35,7 +36,10 @@ initLog();
 // Flow checks. Nothing runs while a run is in progress or a past snapshot is shown.
 setSubmit((text) => {
   if (running() || store.viewing !== null) return;
-  if (classify(text) === 'milestone') void runMilestone(text);
+  const intent = classify(text);
+  // WAYPOINT_LLM=1: the model plans the run and falls back to the scripted runner on any failure.
+  if (llmEnabled() && intent !== 'ask') return void runLLM(text, intent);
+  if (intent === 'milestone') void runMilestone(text);
 });
 
 // Stop · Esc. During the intervene window this leaves the state unchanged.
@@ -66,6 +70,6 @@ render();
 // Test hook: verify/ scripts mutate the store and re-render to reach states the seed
 // does not start in (e.g. an evidence/belief gap). Not used by the app itself.
 declare global {
-  interface Window { __waypoint: { store: typeof store; render: typeof render; runMilestone: typeof runMilestone } }
+  interface Window { __waypoint: { store: typeof store; render: typeof render; runMilestone: typeof runMilestone; runLLM: typeof runLLM } }
 }
-window.__waypoint = { store, render, runMilestone };
+window.__waypoint = { store, render, runMilestone, runLLM };

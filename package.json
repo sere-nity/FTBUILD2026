@@ -7,11 +7,18 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "verify": "npx playwright test"
+    "verify": "npx playwright test",
+    "server": "node server/index.mjs",
+    "dev:llm": "WAYPOINT_LLM=1 vite"
   },
   "devDependencies": {
     "@playwright/test": "^1.64.0",
+    "@types/express": "^5.0.6",
     "typescript": "~6.0.2",
     "vite": "^8.3.0"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.133.0",
+    "express": "^5.3.0"
   }
 }
