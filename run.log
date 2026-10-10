@@ -22,3 +22,20 @@ Iteration 2 done. Three commits on main.
 **Next iteration**: ⚠ gap check, chip enums, card expand in place (checks 15–17).
 autosaved
 === iteration 2  01:12:29 ===
+Iteration 3 done. Check 15 ticked.
+
+**Did**
+- Render already drew separate evidence/belief bars and ⚠ at gap ≥ 2. This iteration proved it: new `verify/assumptions.spec.ts`, 12 tests × 4 viewports. Full suite: 44 passed.
+- Added test hook `window.__waypoint = { store, render }` in `src/main.ts`. Seed has no gap ≥ 2, so tests set `a2.ev` and re-render. Hook reusable for later runner/compare checks.
+
+**Saw** (`verify/shots/assumptions/02-gap-3.*`)
+- ⚠ ochre, beside belief bar on a2 only, all four viewports. Not clipped. No layout shift.
+
+**Design defects carried** (in REPORT.md)
+- ⚠ glyph small, easy to miss at desktop. Matches reference. UX phase.
+- Assumptions grid 3 + 1 at desktop, lonely fourth card.
+- Truncated rests-on/trigger values. 16px reserved status row.
+
+**Commits**: `ede4233` verify + tick, `938c1e2` progress.
+
+**Next**: check 16 (chip enums), then 17 (card expands in place, stack no shift).
