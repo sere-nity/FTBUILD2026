@@ -149,7 +149,7 @@ export function renderDetail(c: Card): HTMLElement {
     html += `<div><h5>Rests on</h5><ul>${c.rests
       .map((id) => {
         const a = byId(id);
-        return `<li>${a ? esc(a.title) + ' · ev ' + dots(a.ev ?? 0) : esc(id)}</li>`;
+        return `<li>${a ? esc(a.title) + ' · ev <span class="dots">' + dots(a.ev ?? 0) + '</span>' : esc(id)}</li>`;
       })
       .join('')}</ul></div>`;
   }

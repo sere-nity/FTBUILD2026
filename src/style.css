@@ -155,6 +155,8 @@ main {
 .level-head .entry { margin-left: auto; font-family: var(--mono); font-size: 11px; color: var(--signal); }
 .level.scanning .cards, .level.scanning .compact { opacity: 0.35; transition: opacity 0.3s; }
 .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; }
+/* Once a card is open, stop its row-mates stretching to match: they keep their own height. */
+.cards:has(.detail) { align-items: start; }
 .compact { color: var(--ink-2); font-size: 13px; padding: 2px 0 6px; }
 .compact b { font-weight: 500; color: var(--ink); }
 .compact button {
@@ -243,6 +245,7 @@ main {
 .detail li { margin: 2px 0; }
 .detail a { color: var(--signal); text-decoration: none; border-bottom: 1px solid var(--signal-soft); }
 .detail .none { color: var(--ink-3); font-style: italic; }
+.detail .dots { font-family: var(--mono); }
 .analogue {
   background: var(--card-2);
   border-radius: 6px;
