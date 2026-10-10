@@ -4,13 +4,13 @@
   --paper: #f6f7f8;
   --ink: #17191c;
   --ink-2: #4a4f58;
-  --ink-3: #8a8f99;
+  --ink-3: #666b74; /* reference used #8a8f99; darkened so 11px labels reach 4.5:1 on card-2 */
   --rule: #d9dce2;
   --card: #ffffff;
   --card-2: #eef0f3;
   --signal: #1d6b8f;
   --signal-soft: #e2eef4;
-  --warn: #9a6b12;
+  --warn: #8a5f0e; /* reference used #9a6b12; darkened so warn text reaches 4.5:1 on warn-soft */
   --warn-soft: #f7edd5;
   --good: #2f6b4a;
   --shadow: rgba(0, 0, 0, 0.12);
@@ -24,7 +24,7 @@
     --paper: #121417;
     --ink: #e8eaee;
     --ink-2: #b4b9c3;
-    --ink-3: #737a86;
+    --ink-3: #8a919d; /* reference used #737a86; lightened so labels reach 4.5:1 on card-2 */
     --rule: #2a2f37;
     --card: #1a1d22;
     --card-2: #22262d;
@@ -42,7 +42,7 @@
   --paper: #121417;
   --ink: #e8eaee;
   --ink-2: #b4b9c3;
-  --ink-3: #737a86;
+  --ink-3: #8a919d; /* reference used #737a86; lightened so labels reach 4.5:1 on card-2 */
   --rule: #2a2f37;
   --card: #1a1d22;
   --card-2: #22262d;
