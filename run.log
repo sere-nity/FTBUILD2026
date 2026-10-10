@@ -66,3 +66,15 @@ Iteration 5 done. Check 17 ticked.
 **Design defects carried**: full citation sentences as link text on 230px cards, dead band above dashed rule from empty status row, 3+1 assumptions grid, truncated rests-on/trigger, double "changed" on product cards.
 
 **Next**: check 18, themes and colour tokens.
+autosaved
+=== iteration 5  01:22:15 ===
+Iteration 6 done. Check 18 ticked with evidence.
+
+**Done**
+- Three tokens moved off reference values for WCAG AA at 11–12px: light `--ink-3` and `--warn`, dark `--ink-3`. Reference values kept in comments.
+- New `verify/theme.spec.ts`: body bg equals `--paper` per scheme, 29 text selectors ≥ 4.5:1 in rich state, signal/warn ≥ 3:1, no colour literal outside `:root`, no inline colours in TS/HTML. Negative check proved contrast test bites.
+- Full verify: 108 passed. Theme screenshots reviewed at all four viewports, report in `verify/REPORT.md`. README gained "Look" section.
+
+**Commits**: `6efb506` feat, `54f4506` verify, `a3d8a88` progress. Only `run.log` left dirty (autosave owns it).
+
+**Next iteration**: check 19 (400px, log below stack, bar fits). Needs bar shell built first.
