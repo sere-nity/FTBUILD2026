@@ -78,3 +78,15 @@ Iteration 6 done. Check 18 ticked with evidence.
 **Commits**: `6efb506` feat, `54f4506` verify, `a3d8a88` progress. Only `run.log` left dirty (autosave owns it).
 
 **Next iteration**: check 19 (400px, log below stack, bar fits). Needs bar shell built first.
+autosaved
+=== iteration 6  01:28:03 ===
+Iteration 7 done. Check 19 ticked with evidence.
+
+**Did**
+- Bar shell in `src/bar.ts`: five hint chips, prompt, ⌘K/Ctrl+K focus, Enter clears. Routing hook `setSubmit()` left for Bar checks.
+- New `verify/phone.spec.ts`, 20 tests. Full run: 128 passed.
+- Fixed from screenshots: bar covered "Log" heading at 400px. Measured bar height now published as `--bar-h`, page pads by it. Negative check proved assertion bites (old CSS fails by 46px).
+- Moved Playwright `outputDir` to ignored `verify/.out`. Runs were wiping all screenshot sets.
+- Report, CHECKS tick, README bar paragraph, PROGRESS entry. Three commits.
+
+**Next run**: Runner section, check 20 (job header). Markup exists in `main.ts`; needs `runner/scripted.ts` with job state and Flow A sizing step.
