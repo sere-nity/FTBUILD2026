@@ -58,3 +58,13 @@ Append one entry per iteration. Newest at the bottom. Keep each entry short: wha
 - Design review carried: full citation sentences as link text on a 230px card (prose on a card); dead band above the dashed rule from the empty status row; 3+1 assumptions grid; truncated rests-on/trigger; double "changed" on product cards.
 - Ticked check 17.
 - Next: check 18 (light and dark themes legible, every colour a token, explicit body background), then 19 (400px once the bar exists).
+
+### 6 · themes legible, tokens only, explicit body background
+- New `verify/theme.spec.ts` (5 tests × 4 viewports, 108 passing in total): body background opaque and equal to `--paper`, dark/light per scheme; every visible text sample from 29 selectors reaches 4.5:1 against the first opaque background behind it, in a state that shows job header, banner, ⚠, open detail, analogue box and a changed product card; signal/warn reach 3:1 on paper and card; no colour literal outside the `:root` blocks of `src/style.css`; no inline colour in markup or TS.
+- Decision: three tokens moved off the reference values because the reference's tertiary grey and light ochre were below WCAG AA at 11–12px: light `--ink-3` #8a8f99 → #666b74, light `--warn` #9a6b12 → #8a5f0e, dark `--ink-3` #737a86 → #8a919d. Spec says "both legible"; spec wins. Reference values are noted in comments beside the tokens.
+- Negative check: restoring the old light `--ink-3` fails the contrast test on 30+ samples, so the assertion is real.
+- Verify: looked at `verify/shots/theme/01-first-load.*` and `02-states.*` at all four viewports. Report in `verify/REPORT.md`. Earlier screenshot sets (stack, assumptions, chips, expand) regenerated with the new greys and committed.
+- README: added a "Look" section (themes follow the OS, `data-theme` override, tokens only, contrast checked).
+- Design review carried: dark cards 1.09:1 against paper (flat stack in dark); heavier keys now closer in weight to values; black `now` pill is the loudest thing on an idle screen; plus the five open items from earlier iterations.
+- Ticked check 18.
+- Next: check 19 (400px: no horizontal scroll, log below stack, bar fits). Needs the prompt bar to exist, so build the bar shell from the reference (`.barwrap`, hints, input, ⌘K kbd) as the smallest change, without intent routing yet.
