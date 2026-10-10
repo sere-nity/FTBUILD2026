@@ -276,3 +276,29 @@ For each of c1, p1, p2, i1, a1, a2: phases seen in the order preparing → propo
 3. The ghost fades to transparent and is then removed, so the new value jumps left by the ghost's width at the end of the fade. Small, but it is the one motion in the settle that is not a fade. Candidate: collapse the ghost's width with its opacity.
 4. Product card notes, the only thing that changes on those cards, are cut mid-word at desktop ("exposed to age…"). Carried (truncated values).
 5. Carried: warning and Stop at opposite edges; window not shown draining; phone chrome ~250px; hint chip focus ring through the run; spinner at 6/6; hint chips float over cards at phone; ⌘K kbd on phone; dark cards 1.09:1; black `now` pill; citation sentences on cards; dead 16px status band; 3+1 assumptions grid; ⚠ glyph small.
+
+## 2026-10-10 · Iteration 12 · log line in sync with the settle (check 24)
+
+Run 1 (sync only): 4 failed, test bug (compared a 12-char slice of each line to a shorter prefix). Run 2: 4 failed, wrong assumption in the test (a2 prepares alongside a1 by design; the "next cell waits for the line" rule holds across levels only). Run 3: 8 passed. Negative check on the previous runner (p1 and p2 settled in sequence under one shared line): fails with "p1 line 900ms after settle". Full run: 200 passed. New spec `verify/sync.spec.ts` (2 tests × 4 viewports) installs a per-frame watcher that timestamps every phase change on every card and every `.l` that lands in the run's log entry.
+
+Measured: settle → line gap 0ms for c1, p1, p2, i1, a1, a2 at all four viewports (the settle's render and the line's append share a task, so they share a frame). p1 and p2 now propose and settle within the same frame. Stop while p1/p2 are proposed: header hidden < 1s, "stopped after 3/6 cells", zero DOM mutations in the stack for the next 1.5s.
+
+### Screenshots reviewed
+- `verify/shots/sync/01-a1-settled.desktop-light.png`: Assumptions "2 changed". a1 settled: "exposure 2 initiatives ↑", accent, status "changed exposure ↑". a2 already proposed (the shot lands ~300ms after a1's settle): "~~0 initiatives~~ 1 initiative ↑", "changed now load-bearing". Log entry has six lines, the newest "assumption “AI assistants mediate discovery”: exposure ↑ …· source"; no line for a2 yet. Header "6/6 cells done" with the spinner still turning.
+- `verify/shots/sync/01-a1-settled.desktop-dark.png`: same in dark; struck-through ghost and the ochre-free line legible.
+- `verify/shots/sync/01-a1-settled.phone-light.png`: a1 centred and settled, a2 proposed beneath with its ghost; hint chips float over the third assumption card.
+- `verify/shots/sync/02-a1-line.phone-light.png`: log scrolled into view: six lines, a1's last, with the source link; the Code card's compact-expanded tail ("changed 14 files") above the LOG heading. Hint chips float over the Jul entry.
+- `verify/shots/sync/02-a1-line.phone-dark.png`: same in dark.
+
+### Defects fixed
+1. One log line covers both product flows, but p1 and p2 settled in sequence, so p1 sat settled for ~900ms with no line (and p2 preparing all the while). They now settle concurrently, as SPEC §5 says cells in a level do. Assertion: p1/p2 proposed and settled within 50ms of each other; every cell's line ≤ 150ms after its settle (measured 0).
+2. `stop()` woke only the most recent pause, so with two settles in flight the other ran on after the stop and re-rendered the stack ~900ms later. Pauses are now a set and Stop wakes all of them. Assertion: no stack DOM mutations for 1.5s after a stop during the shared settle.
+
+### Assertions added
+Exactly eight lines in the run's entry, in order (sizing, reaches, code, product, initiative, assumption a1, assumption a2 (warn), world), non-decreasing timestamps; "reaches" line before the first preparing; for each cell line: not before proposed, not before settled, ≤ 150ms after settled, the cell's last phase change before the line is `settled`; the next level's first cell prepares only after the previous level's line; a2 settles after a1's line; world line after a2's settle; Stop mid-shared-settle: 3/6, no transient classes or `_` keys, four lines in the entry, no stack mutations afterwards.
+
+### Design review (SPEC §7)
+1. The header reaches "6/6 cells done" while a2's ghost is still on screen and the spinner still turns: the count finishes before the screen does. (Sharper form of the carried "spinner at 6/6".) Candidate: count at settle, or stop the spinner and say "done" only when the last ghost has gone.
+2. The a1 line ends "no new sources found ·" and the word "source" wraps alone onto a fifth line at 320px: an orphaned link. Candidate: `white-space: nowrap` on the `· source` span, or put the link on the sentence rather than a trailing word.
+3. The a1 and a2 lines run to 4 and 6 visual lines in the 320px log; §7 wants prose to be two lines. Copy-pass candidate: cut the second sentence of each (the card already shows the number).
+4. Carried: job header not sticky; proposed card says the move twice; new value jumps left when the ghost goes; product notes cut mid-word; warning and Stop at opposite edges; window not shown draining; phone chrome ~250px; hint chip focus ring through the run; hint chips float over cards and the log at phone; ⌘K kbd on phone; dark cards 1.09:1; black `now` pill; citation sentences on cards; dead 16px status band; 3+1 assumptions grid; ⚠ glyph small.
