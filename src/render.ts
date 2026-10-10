@@ -106,14 +106,20 @@ export function renderCard(c: Card, s: State, base: State): HTMLElement {
   el.dataset.id = c.id;
   if (s.changed[c.id]) el.classList.add('changed');
   if (c.kind === 'unplaced') el.classList.add('unplaced');
+  if (c._phase) el.classList.add(c._phase); // preparing | proposed (SPEC §6)
   const b = base.cards.find((x) => x.id === c.id);
 
-  // When comparing, show the baseline value ghosted (struck through) beside the current one.
+  // The old value shown struck through beside the current one: the baseline when comparing,
+  // the pre-run value while the card is `proposed`. Nothing otherwise.
+  const ghostFrom: Partial<Card> | null =
+    store.compare && b ? b
+    : c._phase === 'proposed' && c._prev ? c._prev
+    : null;
   const diff = <K extends keyof Card>(key: K, fmt: (v: NonNullable<Card[K]>) => string): string => {
     const cur = fmt(c[key] as NonNullable<Card[K]>);
-    if (!store.compare || !b || b[key] === undefined) return cur;
-    if (JSON.stringify(b[key]) === JSON.stringify(c[key])) return cur;
-    return `<span class="ghost">${fmt(b[key] as NonNullable<Card[K]>)}</span>${cur}`;
+    if (!ghostFrom || ghostFrom[key] === undefined) return cur;
+    if (JSON.stringify(ghostFrom[key]) === JSON.stringify(c[key])) return cur;
+    return `<span class="ghost">${fmt(ghostFrom[key] as NonNullable<Card[K]>)}</span>${cur}`;
   };
   const trend = c.trend ? `<span class="arrow ${c.trend === '↓' ? 'down' : ''}">${c.trend}</span>` : '';
 

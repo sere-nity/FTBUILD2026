@@ -5,7 +5,8 @@ export const TIMING = {
   prepare: 700, // a cell's spinner + note before it settles
   prepareFast: 300, // second cell in the same level, started while the first prepares
   prepareOverlap: 200, // third-and-later cells in the same level
-  settle: 350, // pause after a cell settles, before the next one starts
+  proposed: 600, // new value applied, old value ghosted beside it, before the ghost fades
+  ghostFade: 300, // the ghost's fade-out (SPEC §7: motion 200–400ms); the card is then settled
   logLine: 260, // pause after each log line
   highlight: 3000, // soft highlight on cards an answer refers to
 } as const;

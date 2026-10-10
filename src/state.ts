@@ -41,9 +41,18 @@ export type Card = {
   sources?: string[];
   trend?: '↑' | '↓' | null;
   trendOn?: string | null;
-  _status?: string | null;
-  _note?: string | null;
+  // Transient keys, only present while a run is touching this card (SPEC §6). `finish()` removes them.
+  _phase?: CellPhase | null;
+  _status?: string | null; // preparing: "Reading…" / "Preparing…"
+  _note?: string | null; // preparing: what the agent is doing for this cell
+  _prev?: Partial<Card> | null; // proposed: the old value of every field that moved, shown ghosted
 };
+
+/** Where a touched card is in the state machine: idle → scanning → preparing → proposed → settled. */
+export type CellPhase = 'preparing' | 'proposed';
+
+/** Fields whose old value is ghosted beside the new one while a card is `proposed` (and in compare). */
+export const GHOSTED: readonly (keyof Card)[] = ['f', 'ev', 'us', 'exposure', 'pct'];
 
 export type Source = {
   t: string;

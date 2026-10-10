@@ -216,7 +216,8 @@ main {
 .fields .v { color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .fields .v.wrap { white-space: normal; }
 .dots { letter-spacing: 1px; }
-.ghost { color: var(--ink-3); text-decoration: line-through; margin-right: 6px; }
+.ghost { color: var(--ink-3); text-decoration: line-through; margin-right: 6px; transition: opacity 0.3s; }
+.ghost.out { opacity: 0; } /* proposed → settled: the old value fades, then the card is redrawn without it */
 .arrow { color: var(--signal); margin-left: 4px; }
 .arrow.down { color: var(--warn); }
 .flag { color: var(--warn); }
