@@ -1,12 +1,12 @@
 import { test, expect, type Page } from '@playwright/test';
 
 // CHECKS.md: 2-second intervene window after sizing; Esc during it leaves state unchanged.
-// SPEC §5: the plan ("Reaches 3 levels · top-down · touches …") is shown before anything runs
+// SPEC §5: the plan ("Reaches 4 levels · moving up from Code", "Will touch: …") is shown before anything runs
 // with a 2-second window to intervene. SPEC §6: stopping during the window means nothing changed.
 // The window is measured in-page, frame by frame, from the plan appearing to the first cell count.
 
 type Watch = {
-  planAt: number; // first frame with "Reaches … · bottom-up" in the title
+  planAt: number; // first frame with "Reaches … · moving up from Code" in the title
   runAt: number; // first frame with "0/6 cells done"
   marks: number; // frames during the window with any spinner, accent, dim or open quiet level
   stateChanged: number; // frames during the window where the serialised state differed
@@ -23,6 +23,13 @@ const shot = (page: Page, name: string, frame: string) =>
 
 const state = (page: Page) => page.evaluate(() => JSON.stringify(window.__waypoint.store.state));
 
+/** The primary hint: "You shipped something · shipped AI DJ v2". Starts Flow A. */
+const ship = async (page: Page) => {
+  const hint = page.locator('#hints .hint.primary');
+  await expect(hint).toContainText('shipped AI DJ v2');
+  await hint.click();
+};
+
 const watch = (page: Page) =>
   page.evaluate(() => {
     const w: Watch = { planAt: 0, runAt: 0, marks: 0, stateChanged: 0 };
@@ -32,7 +39,7 @@ const watch = (page: Page) =>
     const tick = () => {
       const now = performance.now();
       const t = title();
-      if (!w.planAt && /^Reaches \d levels · (bottom-up|top-down)$/.test(t)) w.planAt = now;
+      if (!w.planAt && /^Reaches \d levels · moving (up from Code|down from World)$/.test(t)) w.planAt = now;
       if (w.planAt && !w.runAt) {
         if (/cells done/.test(t)) {
           w.runAt = now;
@@ -71,15 +78,15 @@ test.describe('intervene window', () => {
     test.setTimeout(60_000);
     const before = await state(page);
     await watch(page);
-    await page.getByRole('button', { name: 'shipped the agent-facing giving API' }).click();
+    await ship(page);
 
     // 1 · the plan: reach, direction, what it touches, the window warning, the entry marker.
     const title = page.locator('#jobtitle');
-    await expect(title).toHaveText('Reaches 4 levels · bottom-up');
-    await expect(page.locator('#jobmeta')).toContainText('touches: 1 milestone, 2 product flows, 1 initiative, 2 assumptions');
-    await expect(page.locator('#jobmeta .warn')).toHaveText('2s to intervene');
+    await expect(title).toHaveText('Reaches 4 levels · moving up from Code');
+    await expect(page.locator('#jobmeta')).toContainText('Will touch: 1 milestone, 2 product flows, 1 bet, 2 beliefs.');
+    await expect(page.locator('#jobmeta em')).toHaveText('Type “stop” or press Esc in the next 2 seconds to cancel.');
     await expect(page.locator('#stop')).toBeVisible();
-    await expect(page.locator('.level[data-level="code"] [data-entry]')).toHaveText('◀ entered here');
+    await expect(page.locator('.level[data-level="code"] [data-entry]')).toHaveText('starts here');
     // Nothing has moved yet: no spinner, no accent, no dim, quiet levels still collapsed.
     await expect(page.locator('.status .spin')).toHaveCount(0);
     await expect(page.locator('.card.changed')).toHaveCount(0);
@@ -108,8 +115,8 @@ test.describe('intervene window', () => {
 
   test('Esc at the start of the window: header goes at once, nothing changed', async ({ page }, testInfo) => {
     const before = await state(page);
-    await page.getByRole('button', { name: 'shipped the agent-facing giving API' }).click();
-    await expect(page.locator('#jobtitle')).toHaveText('Reaches 4 levels · bottom-up');
+    await ship(page);
+    await expect(page.locator('#jobtitle')).toHaveText('Reaches 4 levels · moving up from Code');
     const t0 = Date.now();
     await page.keyboard.press('Escape');
     // Regression: stop used to be honoured only when the 2s timer ran out, so the header
@@ -117,7 +124,7 @@ test.describe('intervene window', () => {
     // go within a few frames.
     await expect(page.locator('#job')).toBeHidden({ timeout: 1_000 });
     expect(Date.now() - t0).toBeLessThan(300);
-    await expect(page.locator('#log .entry').first().locator('.l.warn')).toHaveText('stopped before running');
+    await expect(page.locator('#log .entry').first().locator('.l.warn')).toHaveText('Stopped before anything changed.');
     await expect(page.locator('#log .entry').first().locator('.l')).toHaveCount(2); // sizing…, stopped
     await idle(page);
     expect(await state(page)).toBe(before);
@@ -131,13 +138,15 @@ test.describe('intervene window', () => {
 
   test('Esc late in the window still stops with nothing changed', async ({ page }, testInfo) => {
     const before = await state(page);
-    await page.getByRole('button', { name: 'shipped the agent-facing giving API' }).click();
-    await expect(page.locator('#jobtitle')).toHaveText('Reaches 4 levels · bottom-up');
+    await ship(page);
+    // Catch the plan on the frame it appears: `expect` polls as slowly as once a second, which
+    // could put the 1.5s wait below past the 2s window.
+    await page.waitForFunction(() => document.querySelector('#jobtitle')?.textContent === 'Reaches 4 levels · moving up from Code');
     await page.waitForTimeout(1_500);
-    await expect(page.locator('#jobtitle')).toHaveText('Reaches 4 levels · bottom-up');
+    await expect(page.locator('#jobtitle')).toHaveText('Reaches 4 levels · moving up from Code');
     await page.keyboard.press('Escape');
     await expect(page.locator('#job')).toBeHidden({ timeout: 1_000 });
-    await expect(page.locator('#log .entry').first().locator('.l.warn')).toHaveText('stopped before running');
+    await expect(page.locator('#log .entry').first().locator('.l.warn')).toHaveText('Stopped before anything changed.');
     await idle(page);
     expect(await state(page)).toBe(before);
     await shot(page, testInfo.project.name, '03-esc-late');
@@ -156,9 +165,9 @@ test.describe('intervene window', () => {
     await expect(page.locator('#log .entry')).toHaveCount(1);
     expect(await state(page)).toBe(before);
     // In the window with the bar focused (the user was about to type): Esc still stops.
-    await page.getByRole('button', { name: 'shipped the agent-facing giving API' }).click();
+    await ship(page);
     await page.locator('#prompt').focus();
-    await expect(page.locator('#jobtitle')).toHaveText('Reaches 4 levels · bottom-up');
+    await expect(page.locator('#jobtitle')).toHaveText('Reaches 4 levels · moving up from Code');
     await page.keyboard.press('Escape');
     await expect(page.locator('#job')).toBeHidden({ timeout: 1_000 });
     await idle(page);
@@ -167,8 +176,8 @@ test.describe('intervene window', () => {
 
   test('typing and submitting in the window is ignored; the run goes on', async ({ page }) => {
     test.setTimeout(60_000);
-    await page.getByRole('button', { name: 'shipped the agent-facing giving API' }).click();
-    await expect(page.locator('#jobtitle')).toHaveText('Reaches 4 levels · bottom-up');
+    await ship(page);
+    await expect(page.locator('#jobtitle')).toHaveText('Reaches 4 levels · moving up from Code');
     await page.locator('#prompt').fill('world update');
     await page.keyboard.press('Enter');
     await expect(page.locator('#log .entry')).toHaveCount(2); // Jul + the milestone only

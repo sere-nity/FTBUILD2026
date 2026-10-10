@@ -18,36 +18,46 @@ const setDots = (page: Page, id: string, ev: number, us: number) =>
     [id, ev, us] as const,
   );
 
-test.describe('assumptions: evidence, belief, gap flag', () => {
+test.describe('beliefs: evidence, our belief, gap flag', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     await page.locator('.level[data-level="assumptions"] .card').first().waitFor();
   });
 
-  test('every assumption shows two separate five-dot bars', async ({ page }) => {
+  test('every belief shows two separate five-dot bars', async ({ page }) => {
     const cards = page.locator('.level[data-level="assumptions"] .card');
     await expect(cards).toHaveCount(4);
     for (let i = 0; i < 4; i++) {
       const c = cards.nth(i);
       await expect(c.locator('.fields .k').nth(0)).toHaveText('evidence');
-      await expect(c.locator('.fields .k').nth(1)).toHaveText('belief');
+      await expect(c.locator('.fields .k').nth(1)).toHaveText('our belief');
       const ev = c.locator('.fields .v.dots').nth(0);
       const us = c.locator('.fields .v.dots').nth(1);
       await expect(ev).toHaveText(DOTS);
-      await expect(us).toHaveText(DOTS);
+      // The belief row may carry the ⚠ flag after its dots.
+      await expect(us).toHaveText(/^[●○]{5}( ⚠)?$/);
       // Two bars, never one blended confidence: they live in different rows.
       const [a, b] = await Promise.all([ev.boundingBox(), us.boundingBox()]);
       expect(b!.y).toBeGreaterThan(a!.y);
     }
-    // Seed values: a1 3/4, a2 3/4, a3 2/3, a4 4/4.
+    // Seed values: a1 3/4, a2 4/4, a3 2/4, a4 3/4.
+    await expect(page.locator('.card[data-id="a1"] .fields .v.dots').nth(0)).toHaveText('●●●○○');
+    await expect(page.locator('.card[data-id="a1"] .fields .v.dots').nth(1)).toHaveText('●●●●○');
+    await expect(page.locator('.card[data-id="a2"] .fields .v.dots').nth(0)).toHaveText('●●●●○');
+    await expect(page.locator('.card[data-id="a2"] .fields .v.dots').nth(1)).toHaveText('●●●●○');
     await expect(page.locator('.card[data-id="a3"] .fields .v.dots').nth(0)).toHaveText('●●○○○');
-    await expect(page.locator('.card[data-id="a3"] .fields .v.dots').nth(1)).toHaveText('●●●○○');
-    await expect(page.locator('.card[data-id="a4"] .fields .v.dots').nth(0)).toHaveText('●●●●○');
+    await expect(page.locator('.card[data-id="a3"] .fields .v.dots').nth(1)).toContainText('●●●●○');
+    await expect(page.locator('.card[data-id="a4"] .fields .v.dots').nth(0)).toHaveText('●●●○○');
+    await expect(page.locator('.card[data-id="a4"] .fields .v.dots').nth(1)).toHaveText('●●●●○');
   });
 
   test('⚠ appears only when evidence and belief differ by 2 or more', async ({ page }, testInfo) => {
     const flags = page.locator('.level[data-level="assumptions"] .flag');
-    // Seed: largest gap is 1 → no flag anywhere.
+    // Seed: a3 believes ●●●●○ on ●●○○○ evidence (gap 2), the only gap of 2 or more → one flag, on a3.
+    await expect(flags).toHaveCount(1);
+    await expect(page.locator('.card[data-id="a3"] .fields .v.dots').nth(1).locator('.flag')).toHaveText('⚠');
+    // Close a3's gap to 1 → no flag anywhere.
+    await setDots(page, 'a3', 3, 4);
     await expect(flags).toHaveCount(0);
     await shot(page, testInfo.project.name, '01-no-gap');
 
@@ -58,7 +68,7 @@ test.describe('assumptions: evidence, belief, gap flag', () => {
     await expect(a2.locator('.fields .v.dots').nth(0)).toHaveText('●○○○○');
     await expect(a2.locator('.fields .v.dots').nth(1)).toContainText('●●●●○');
     await expect(a2.locator('.fields .v.dots').nth(1).locator('.flag')).toHaveText('⚠');
-    await expect(a2.locator('.flag')).toHaveAttribute('title', /evidence and belief disagree/);
+    await expect(a2.locator('.flag')).toHaveAttribute('title', 'We believe this more than the evidence supports');
     // The flag must be visible, not clipped by the row's overflow.
     const row = a2.locator('.fields .v.dots').nth(1);
     expect(await row.evaluate((e) => e.scrollWidth <= e.clientWidth)).toBe(true);

@@ -54,7 +54,7 @@ test.describe('chips use only the SPEC §3 enums', () => {
     // A product card the run touched flips to "changed" and takes the accent.
     await page.evaluate(() => {
       const { store, render } = window.__waypoint;
-      store.state.changed['p1'] = 'exposed to agents';
+      store.state.changed['p1'] = 'DJ promoted';
       render();
     });
     const p1 = page.locator('.card[data-id="p1"] .chip');
@@ -89,7 +89,7 @@ test.describe('chips use only the SPEC §3 enums', () => {
     await expect(page.locator('.card[data-id="a1"] .chip')).toHaveCount(0);
     await expect(page.locator('.card[data-id="i1"] .chip')).toHaveCount(0);
     // The rest of the card still renders.
-    await expect(page.locator('.card[data-id="w1"] h4')).toHaveText('Agent Concierge');
+    await expect(page.locator('.card[data-id="w1"] h4')).toHaveText('Agents pick the music');
     await expect(page.locator('.card[data-id="i1"] .fields .k').first()).toHaveText('shipped');
   });
 

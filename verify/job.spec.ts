@@ -7,6 +7,13 @@ import { test, expect, type Page } from '@playwright/test';
 const shot = (page: Page, name: string, frame: string) =>
   page.screenshot({ path: `verify/shots/job/${frame}.${name}.png`, fullPage: false });
 
+/** The primary hint: "You shipped something · shipped AI DJ v2". Starts Flow A. */
+const ship = async (page: Page) => {
+  const hint = page.locator('#hints .hint.primary');
+  await expect(hint).toContainText('shipped AI DJ v2');
+  await hint.click();
+};
+
 const barPct = (page: Page) =>
   page.evaluate(() => {
     const i = document.querySelector<HTMLElement>('#jobbar')!;
@@ -33,12 +40,12 @@ test.describe('job header', () => {
     const meta = page.locator('#jobmeta');
     const stop = page.locator('#stop');
 
-    await page.getByRole('button', { name: 'shipped the agent-facing giving API' }).click();
+    await ship(page);
 
     // 1 · sizing: header visible, spinner, phase text, every level dimmed, bar started.
     await expect(job).toBeVisible();
-    await expect(title).toHaveText('Sizing change…');
-    await expect(meta).toHaveText('scanning all levels');
+    await expect(title).toHaveText('Sizing the change…');
+    await expect(meta).toHaveText('How far does this reach? Looking at every level.');
     await expect(page.locator('#job .line1 .spin')).toBeVisible();
     await expect(stop).toBeVisible();
     await expect(stop).toHaveText('Stop · Esc');
@@ -49,14 +56,14 @@ test.describe('job header', () => {
     await shot(page, testInfo.project.name, '01-sizing');
 
     // 2 · intervene: "Reaches N levels · direction", touches, 2s warning, entry marker.
-    await expect(title).toHaveText('Reaches 4 levels · bottom-up');
-    await expect(meta).toContainText('touches: 1 milestone, 2 product flows, 1 initiative, 2 assumptions');
-    await expect(meta.locator('.warn')).toHaveText('2s to intervene');
+    await expect(title).toHaveText('Reaches 4 levels · moving up from Code');
+    await expect(meta).toContainText('Will touch: 1 milestone, 2 product flows, 1 bet, 2 beliefs.');
+    await expect(meta.locator('em')).toHaveText('Type “stop” or press Esc in the next 2 seconds to cancel.');
     // No separator glyph that can be orphaned at a line end when the meta wraps at 400px.
     await expect(meta).not.toContainText('·');
-    await expect(meta.locator('> span')).toHaveCount(2);
+    await expect(meta.locator('> *')).toHaveCount(2); // the touches span and the warning em
     await expect(page.locator('.level.scanning')).toHaveCount(0);
-    await expect(page.locator('.level[data-level="code"] [data-entry]')).toHaveText('◀ entered here');
+    await expect(page.locator('.level[data-level="code"] [data-entry]')).toHaveText('starts here');
     await expect(page.locator('.level:not([data-level="code"]) [data-entry]')).toHaveText(['', '', '', '']);
     const p2 = await barPct(page);
     expect(p2).toBeGreaterThan(p1);
@@ -64,7 +71,7 @@ test.describe('job header', () => {
 
     // 3 · running: k/n cells counts up, bar grows with it, Stop stays available.
     await expect(title).toHaveText('Reaches 4 levels · 0/6 cells done');
-    await expect(meta).toHaveText('bottom-up · milestone');
+    await expect(meta).toHaveText('moving up from Code');
     await expect(stop).toBeVisible();
     await expect(title).toHaveText('Reaches 4 levels · 1/6 cells done', { timeout: 10_000 });
     const p3 = await barPct(page);
@@ -87,11 +94,11 @@ test.describe('job header', () => {
 
   test('Stop during the intervene window hides the header and changes nothing', async ({ page }, testInfo) => {
     const before = await page.evaluate(() => JSON.stringify(window.__waypoint.store.state));
-    await page.getByRole('button', { name: 'shipped the agent-facing giving API' }).click();
-    await expect(page.locator('#jobtitle')).toHaveText('Reaches 4 levels · bottom-up');
+    await ship(page);
+    await expect(page.locator('#jobtitle')).toHaveText('Reaches 4 levels · moving up from Code');
     await page.locator('#stop').click();
     await expect(page.locator('#job')).toBeHidden();
-    await expect(page.locator('#log .entry').first().locator('.l.warn')).toHaveText('stopped before running');
+    await expect(page.locator('#log .entry').first().locator('.l.warn')).toHaveText('Stopped before anything changed.');
     const after = await page.evaluate(() => JSON.stringify(window.__waypoint.store.state));
     expect(after).toBe(before);
     await expect(page.locator('[data-entry]')).toHaveText(['', '', '', '', '']);
@@ -99,9 +106,9 @@ test.describe('job header', () => {
   });
 
   test('a second submit while a run is in progress is ignored', async ({ page }) => {
-    await page.getByRole('button', { name: 'shipped the agent-facing giving API' }).click();
+    await ship(page);
     await expect(page.locator('#job')).toBeVisible();
-    await page.getByRole('button', { name: 'shipped the agent-facing giving API' }).click();
+    await page.locator('#hints .hint.primary').click();
     await expect(page.locator('#log .entry')).toHaveCount(2); // Jul baseline + one milestone
     await page.keyboard.press('Escape');
     await expect(page.locator('#job')).toBeHidden();

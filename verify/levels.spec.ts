@@ -25,6 +25,13 @@ const centre = (l: ReturnType<Page['locator']>) => l.evaluate((el) => el.scrollI
 const shot = (page: Page, name: string, frame: string) =>
   page.screenshot({ path: `verify/shots/levels/${frame}.${name}.png`, fullPage: false });
 
+/** The primary hint: "You shipped something · shipped AI DJ v2". Starts Flow A. */
+const ship = async (page: Page) => {
+  const hint = page.locator('#hints .hint.primary');
+  await expect(hint).toContainText('shipped AI DJ v2');
+  await hint.click();
+};
+
 const watch = (page: Page) =>
   page.evaluate(() => {
     const w: Watch = { changes: [], phases: [], jobHiddenAt: 0, jobShownAt: 0, frames: 0 };
@@ -90,7 +97,7 @@ test.describe('levels expand for a run and collapse after', () => {
     await expect(product.locator('.cards')).toHaveCount(0);
 
     await watch(page);
-    await page.getByRole('button', { name: 'shipped the agent-facing giving API' }).click();
+    await ship(page);
 
     // Sizing and the intervene window change nothing about which levels are open.
     await expect(page.locator('#job')).toBeVisible();
@@ -107,9 +114,9 @@ test.describe('levels expand for a run and collapse after', () => {
     await centre(code);
     await shot(page, testInfo.project.name, '01-code-opens');
 
-    // 2 · Product opens as p1 starts preparing; Code stays open with its settled card.
-    const p1 = page.locator('.card[data-id="p1"]');
-    await expect(p1).toHaveClass(/preparing/, { timeout: 10_000 });
+    // 2 · Product opens as p2 (AI DJ, its first cell) starts preparing; Code stays open with its settled card.
+    const p2 = page.locator('.card[data-id="p2"]');
+    await expect(p2).toHaveClass(/preparing/, { timeout: 10_000 });
     await expect(product.locator('.compact')).toHaveCount(0);
     await expect(product.locator('.cards .card')).toHaveCount(3);
     await expect(code.locator('.cards .card')).toHaveCount(1);
@@ -132,11 +139,12 @@ test.describe('levels expand for a run and collapse after', () => {
     await expect(product.locator('.cards')).toHaveCount(0);
     await expect(code.locator('.cards')).toHaveCount(0);
     expect(await expanded(page)).toEqual({ world: true, assumptions: true, initiatives: true, product: false, code: false });
-    await expect(code.locator('.compact')).toContainText('Milestone: agent giving API v1 · 14 files · api/giving/*');
-    await expect(product.locator('.compact')).toContainText('cause search now exposed to agents');
-    await expect(product.locator('.compact')).toContainText('verified-partner data readable by agents');
-    await expect(product.locator('.compact button[data-expand="product"]')).toHaveText('expand');
-    await expect(code.locator('.compact button[data-expand="code"]')).toHaveText('expand');
+    await expect(code.locator('.compact')).toContainText('Milestone: AI DJ v2 · 31 files · dj/* · Oct 2026');
+    await expect(product.locator('.compact')).toContainText('AI DJ · v2: takes requests in natural language, remembers context');
+    await expect(product.locator('.compact')).toContainText('Home feed · AI DJ now the first shelf on Home');
+    await expect(product.locator('.compact')).toContainText('Artist profile · bio, credits, verification');
+    await expect(product.locator('.compact button[data-expand="product"]')).toHaveText('show');
+    await expect(code.locator('.compact button[data-expand="code"]')).toHaveText('show');
     // The three open levels still show their cards; two of them carry the accent.
     await expect(page.locator('.level[data-level="assumptions"] .cards .card')).toHaveCount(4);
     await expect(page.locator('.level[data-level="initiatives"] .cards .card')).toHaveCount(3);
@@ -166,9 +174,13 @@ test.describe('levels expand for a run and collapse after', () => {
     const [productClose] = openAt(w, 'product', false).slice(-1);
     // Opens on the frame its first cell prepares, not before: the card is first seen preparing.
     expect(w.phases.find((p) => p.id === 'c1')!.phase).toBe('preparing');
-    expect(w.phases.find((p) => p.id === 'p1')!.phase).toBe('preparing');
+    expect(w.phases.find((p) => p.id === 'p2')!.phase).toBe('preparing');
     expect(Math.abs(codeOpen - phaseAt(w, 'c1', 'preparing')), 'code opens with c1 preparing').toBeLessThanOrEqual(FEW_FRAMES);
-    expect(Math.abs(productOpen - phaseAt(w, 'p1', 'preparing')), 'product opens with p1 preparing').toBeLessThanOrEqual(FEW_FRAMES);
+    expect(Math.abs(productOpen - phaseAt(w, 'p2', 'preparing')), 'product opens with p2 preparing').toBeLessThanOrEqual(FEW_FRAMES);
+    // p1 (Home) is on the level p2 opened, so it is first seen idle and starts preparing after Product opened.
+    expect(w.phases.find((p) => p.id === 'p1')!.phase).toBe('idle');
+    expect(phaseAt(w, 'p1', 'preparing')).toBeGreaterThan(productOpen);
+    expect(phaseAt(w, 'p1', 'preparing')).toBeGreaterThan(phaseAt(w, 'p2', 'preparing'));
     // Not before the plan is shown: both open after the header appears, Code first, in run order.
     expect(codeOpen).toBeGreaterThan(w.jobShownAt);
     expect(productOpen).toBeGreaterThan(codeOpen);
@@ -176,7 +188,8 @@ test.describe('levels expand for a run and collapse after', () => {
     // Stays open through its cells' settle and through the rest of the run.
     expect(codeClose).toBeGreaterThan(phaseAt(w, 'c1', 'settled'));
     expect(productClose).toBeGreaterThan(phaseAt(w, 'p2', 'settled'));
-    expect(productClose).toBeGreaterThan(phaseAt(w, 'a2', 'settled'));
+    expect(productClose).toBeGreaterThan(phaseAt(w, 'p1', 'settled'));
+    expect(productClose).toBeGreaterThan(phaseAt(w, 'a4', 'settled'));
     // Closes on the frame the header hides.
     expect(Math.abs(codeClose - w.jobHiddenAt), 'code closes with the header').toBeLessThanOrEqual(FEW_FRAMES);
     expect(Math.abs(productClose - w.jobHiddenAt), 'product closes with the header').toBeLessThanOrEqual(FEW_FRAMES);
@@ -185,7 +198,7 @@ test.describe('levels expand for a run and collapse after', () => {
       type: 'level timing ms',
       description: JSON.stringify({
         codeOpenVsC1: Math.round(codeOpen - phaseAt(w, 'c1', 'preparing')),
-        productOpenVsP1: Math.round(productOpen - phaseAt(w, 'p1', 'preparing')),
+        productOpenVsP2: Math.round(productOpen - phaseAt(w, 'p2', 'preparing')),
         codeCloseVsHeader: Math.round(codeClose - w.jobHiddenAt),
         productCloseVsHeader: Math.round(productClose - w.jobHiddenAt),
       }),
@@ -195,7 +208,8 @@ test.describe('levels expand for a run and collapse after', () => {
     await product.locator('button[data-expand="product"]').click();
     await expect(product.locator('.cards .card')).toHaveCount(3);
     await expect(product.locator('.card.changed')).toHaveCount(2);
-    await expect(product.locator('.card[data-id="p1"] .status')).toContainText('agent endpoint');
+    await expect(product.locator('.card[data-id="p1"] .status')).toContainText('DJ promoted');
+    await expect(product.locator('.card[data-id="p2"] .status')).toContainText('v2 shipped');
     await expect(code.locator('.compact')).toBeVisible(); // only the clicked level opens
     await centre(product);
     await shot(page, testInfo.project.name, '04-reopened');
@@ -207,7 +221,7 @@ test.describe('levels expand for a run and collapse after', () => {
   test('Esc during the window: no level opens or closes', async ({ page }) => {
     test.setTimeout(30_000);
     await watch(page);
-    await page.getByRole('button', { name: 'shipped the agent-facing giving API' }).click();
+    await ship(page);
     await expect(page.locator('#job')).toContainText('Reaches 4 levels', { timeout: 5_000 });
     await page.keyboard.press('Escape');
     await expect(page.locator('#job')).toBeHidden({ timeout: 1_000 });
@@ -225,9 +239,9 @@ test.describe('levels expand for a run and collapse after', () => {
   test('Stop mid-run: the touched levels that are quiet by default close at once', async ({ page }) => {
     test.setTimeout(60_000);
     await watch(page);
-    await page.getByRole('button', { name: 'shipped the agent-facing giving API' }).click();
-    const p1 = page.locator('.card[data-id="p1"]');
-    await expect(p1).toHaveClass(/preparing/, { timeout: 20_000 });
+    await ship(page);
+    const p2 = page.locator('.card[data-id="p2"]');
+    await expect(p2).toHaveClass(/preparing/, { timeout: 20_000 });
     expect(await expanded(page)).toEqual({ world: true, assumptions: true, initiatives: true, product: true, code: true });
     await page.locator('#stop').click();
     await expect(page.locator('#job')).toBeHidden({ timeout: 1_000 });
@@ -235,8 +249,9 @@ test.describe('levels expand for a run and collapse after', () => {
     await expect(page.locator('.level[data-level="product"] .compact')).toBeVisible();
     await expect(page.locator('.level[data-level="code"] .compact')).toBeVisible();
     // The stopped cells' text is on the compact line: Code changed, Product did not.
-    await expect(page.locator('.level[data-level="code"] .compact')).toContainText('Milestone: agent giving API v1');
-    await expect(page.locator('.level[data-level="product"] .compact')).not.toContainText('exposed to agents');
+    await expect(page.locator('.level[data-level="code"] .compact')).toContainText('Milestone: AI DJ v2');
+    await expect(page.locator('.level[data-level="product"] .compact')).not.toContainText('takes requests in natural language');
+    await expect(page.locator('.level[data-level="product"] .compact')).toContainText('AI DJ · voice host, on-demand sessions');
     await page.waitForTimeout(900);
     const w = await page.evaluate(() => window.__levels);
     expect(w.changes.filter((c) => c.level === 'product').map((c) => c.open)).toEqual([false, true, false]);

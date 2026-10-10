@@ -1,13 +1,13 @@
 import { test, expect, type Page } from '@playwright/test';
 
 // CHECKS.md: `scanning` dims every level for ~1.1s, then untouched levels snap back solid.
-// SPEC §6: the whole level dims to ~35% opacity while classify runs (~1.1s). Then untouched
-// levels snap back. Timing is measured in-page with a per-frame watcher so the assertion is
+// SPEC §6: the whole level body dims (to 0.3 in style.css) while classify runs (~1.1s). Then
+// untouched levels snap back. Timing is measured in-page with a per-frame watcher so the assertion is
 // about what the screen did, not about what the runner intended.
 
 type Watch = {
   onAt: number; // first frame with a `.scanning` level
-  dimAt: number; // first frame where a level's cards are at ≤ 36% opacity
+  dimAt: number; // first frame where a level's body is at ≤ 0.31 opacity
   offAt: number; // first frame with no `.scanning` level again
   minOpacity: number; // lowest opacity sampled while scanning
   atOff: string[]; // opacity of every level body on the frame scanning ended
@@ -25,6 +25,13 @@ const shot = (page: Page, name: string, frame: string) =>
 
 const BODY = '.level .cards, .level .compact';
 
+/** The primary hint: "You shipped something · shipped AI DJ v2". Starts Flow A. */
+const ship = async (page: Page) => {
+  const hint = page.locator('#hints .hint.primary');
+  await expect(hint).toContainText('shipped AI DJ v2');
+  await hint.click();
+};
+
 /** Sample the stack every animation frame until the scanning phase has come and gone. */
 const watch = (page: Page) =>
   page.evaluate(() => {
@@ -39,7 +46,7 @@ const watch = (page: Page) =>
         const ops = bodies().map((e) => parseFloat(getComputedStyle(e).opacity));
         const max = Math.max(...ops);
         w.minOpacity = Math.min(w.minOpacity, max);
-        if (max <= 0.36 && !w.dimAt) w.dimAt = now;
+        if (max <= 0.31 && !w.dimAt) w.dimAt = now;
         if (n === 0) {
           w.offAt = now;
           w.atOff = bodies().map((e) => getComputedStyle(e).opacity);
@@ -61,18 +68,18 @@ test.describe('scanning', () => {
     await page.locator('.level').first().waitFor();
   });
 
-  test('every level dims to 35% for ~1.1s, then snaps back solid', async ({ page }, testInfo) => {
+  test('every level dims to 0.3 for ~1.1s, then snaps back solid', async ({ page }, testInfo) => {
     test.setTimeout(60_000);
     await expect(page.locator('.level')).toHaveCount(5);
     await watch(page);
-    await page.getByRole('button', { name: 'shipped the agent-facing giving API' }).click();
+    await ship(page);
 
-    // 1 · all five levels carry the class; bodies reach 35% once the 300ms fade is done.
+    // 1 · all five levels carry the class; bodies reach 0.3 once the 300ms fade is done.
     await expect(page.locator('.level.scanning')).toHaveCount(5);
-    await expect.poll(async () => Math.max(...(await opacities(page)).map(Number))).toBeLessThanOrEqual(0.36);
+    await expect.poll(async () => Math.max(...(await opacities(page)).map(Number))).toBeLessThanOrEqual(0.31);
     expect((await opacities(page)).length).toBe(5);
-    // Level heads stay solid: the level is dimmed, not hidden.
-    for (const op of await page.$$eval('.level-head', (els) => els.map((e) => getComputedStyle(e).opacity))) {
+    // Level heads and the rail stay solid: the level body is dimmed, not hidden.
+    for (const op of await page.$$eval('.level-head, .level .rail', (els) => els.map((e) => getComputedStyle(e).opacity))) {
       expect(op).toBe('1');
     }
     // Nothing is marked while scanning: no spinner, no accent, no entry marker.
@@ -89,7 +96,7 @@ test.describe('scanning', () => {
     const held = w.offAt - w.onAt;
     expect(held, `scanning held ${Math.round(held)}ms`).toBeGreaterThanOrEqual(1000);
     expect(held, `scanning held ${Math.round(held)}ms`).toBeLessThanOrEqual(1500);
-    expect(w.minOpacity).toBeLessThanOrEqual(0.36);
+    expect(w.minOpacity).toBeLessThanOrEqual(0.31);
     expect(w.minOpacity).toBeGreaterThanOrEqual(0.3);
     // Dim fades in over the 300ms transition (SPEC §7: motion 200–400ms), not instantly.
     // Regression: the stack is rebuilt before dimming, and a class added before the first
@@ -113,15 +120,15 @@ test.describe('scanning', () => {
 
   test('Esc while scanning: levels snap back, header goes, nothing changed', async ({ page }, testInfo) => {
     const before = await page.evaluate(() => JSON.stringify(window.__waypoint.store.state));
-    await page.getByRole('button', { name: 'shipped the agent-facing giving API' }).click();
+    await ship(page);
     await expect(page.locator('.level.scanning')).toHaveCount(5);
-    await expect.poll(async () => Math.max(...(await opacities(page)).map(Number))).toBeLessThanOrEqual(0.36);
+    await expect.poll(async () => Math.max(...(await opacities(page)).map(Number))).toBeLessThanOrEqual(0.31);
     await page.keyboard.press('Escape');
     await expect(page.locator('#job')).toBeHidden({ timeout: 3_000 });
     await expect(page.locator('.level.scanning')).toHaveCount(0);
     expect(await opacities(page)).toEqual(['1', '1', '1', '1', '1']);
     await expect(page.locator('#jobtitle')).not.toHaveText(/Reaches/);
-    await expect(page.locator('#log .entry').first().locator('.l.warn')).toHaveText('stopped before running');
+    await expect(page.locator('#log .entry').first().locator('.l.warn')).toHaveText('Stopped before anything changed.');
     const after = await page.evaluate(() => JSON.stringify(window.__waypoint.store.state));
     expect(after).toBe(before);
     await shot(page, testInfo.project.name, '03-stopped-while-scanning');
@@ -136,9 +143,9 @@ test.describe('scanning · reduced motion', () => {
     await page.goto('/');
     await page.locator('.level').first().waitFor();
     await watch(page);
-    await page.getByRole('button', { name: 'shipped the agent-facing giving API' }).click();
+    await ship(page);
     await expect(page.locator('.level.scanning')).toHaveCount(5);
-    expect(await opacities(page)).toEqual(['0.35', '0.35', '0.35', '0.35', '0.35']);
+    expect(await opacities(page)).toEqual(['0.3', '0.3', '0.3', '0.3', '0.3']);
     await expect(page.locator('.level.scanning')).toHaveCount(0, { timeout: 5_000 });
     const w = await page.evaluate(() => window.__scan);
     expect(w.dimAt - w.onAt).toBeLessThanOrEqual(40);
