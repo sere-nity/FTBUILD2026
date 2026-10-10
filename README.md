@@ -30,7 +30,7 @@ The prompt bar is fixed to the bottom with the five hint chips above it. `⌘K` 
 
 ## Runner
 
-The default runner is scripted (`src/runner/scripted.ts`): no network, no key, same content and order as the reference. So far it runs the milestone flow (Flow A, bottom-up); the bar routes text that mentions ship / api / agent / milestone / launch to it. Every run shows a job header above the stack: phase ("Sizing change…" while every level dims, then "Reaches N levels · direction" with what it touches and a 2-second window to intervene, then "k/n cells done"), a Stop button, and a thin progress bar. `Esc` or Stop ends the run; during the window nothing has changed yet. All delays live in `src/runner/timing.ts`.
+The default runner is scripted (`src/runner/scripted.ts`): no network, no key, same content and order as the reference. So far it runs the milestone flow (Flow A, bottom-up); the bar routes text that mentions ship / api / agent / milestone / launch to it. Every run shows a job header above the stack: phase ("Sizing change…" while every level fades to 35% for about a second and snaps back, then "Reaches N levels · direction" with what it touches and a 2-second window to intervene, then "k/n cells done"), a Stop button, and a thin progress bar. `Esc` or Stop ends the run; during the window nothing has changed yet. All delays live in `src/runner/timing.ts`.
 
 ## Kit contents
 - `CLAUDE.md` operating rules for the unattended build
