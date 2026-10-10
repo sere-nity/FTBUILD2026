@@ -73,7 +73,7 @@ export function jobText(j: Job): { title: string; meta: string; pct: number } {
 
 /**
  * Job header, level dimming and the entry marker, all from `store.job`.
- * `.scanning` is added one frame after the levels are built so the dim transitions in.
+ * `.scanning` is added after a forced style pass so the dim fades in (300ms) and snaps out.
  */
 function renderJob(j: Job | null): void {
   const job = $('#job');
@@ -89,9 +89,10 @@ function renderJob(j: Job | null): void {
   $('#jobmeta').innerHTML = t.meta;
   $('#jobbar').style.width = `${t.pct}%`;
   if (j.phase === 'sizing') {
-    requestAnimationFrame(() => {
-      if (store.job?.phase === 'sizing') for (const el of levels) el.classList.add('scanning');
-    });
+    // The stack was just rebuilt, so these elements have no computed style yet and a class
+    // added now would land without a transition. Force one style pass first, then dim.
+    for (const el of levels) void el.offsetHeight;
+    for (const el of levels) el.classList.add('scanning');
   } else {
     for (const el of levels) el.classList.remove('scanning');
     const entry = document.querySelector(`.level[data-level="${entryLevel(j.dir)}"] [data-entry]`);

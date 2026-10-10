@@ -190,3 +190,30 @@ Header hidden when idle; visible with spinner, "Sizing change…", "scanning all
 2. The header spinner keeps turning at "6/6 cells done" while the last log lines land. Minor; a done state could stop it.
 3. During sizing at phone, the header plus top bar push the first card to y≈270, so only one and a half dimmed cards show the "scanning" state. Acceptable.
 4. Carried: hint chips float over cards at 400px; ⌘K kbd on phone; dark cards 1.09:1; black `now` pill; full citation sentences on cards; dead 16px status band; 3+1 assumptions grid; truncated rests-on/trigger; double "changed" on product cards; ⚠ glyph small.
+
+## 2026-10-10 · Iteration 9 · `scanning` dims every level ~1.1s, then snaps back solid (check 21)
+
+Run 1 (scanning only): 12 passed. Run 2 (full, after the fade fix): 156 passed. New spec `verify/scanning.spec.ts` (3 tests × 4 viewports) installs a per-frame watcher in the page before the hint chip is clicked and records when `.scanning` appears, when the bodies reach ≤ 36% opacity, when the class is gone, and the opacity of every level body on that first frame.
+
+Measured (one-off script, same watcher): desktop held 1114ms, fade to 35% in 264ms; phone held 1112ms, fade 263ms; every body at opacity 1 on the frame the class left. Before the fix: held 1082/1100ms, fade 0ms.
+
+### Screenshots reviewed
+- `verify/shots/scanning/01-dimmed.desktop-light.png`: header "Sizing change…" / "scanning all levels", Stop · Esc. Every card in World and Assumptions at 35%: titles, dots and chips all faded evenly; level heads ("WORLD 2 scenarios") stay full ink. Log shows the new MILESTONE entry with "sizing…" at the same moment. Hint chips and bar stay solid over the dimmed stack.
+- `verify/shots/scanning/01-dimmed.desktop-dark.png`: same in dark. Dimmed cards are faint but still read as cards; chips LIVE/WATCH tints survive the dim.
+- `verify/shots/scanning/01-dimmed.phone-light.png`: 400px: header three rows, World's two cards and the first Assumptions card visible, all dimmed. The five hint chips sit solid on top of the dimmed Assumptions card, so the chips are the loudest thing on screen during sizing.
+- `verify/shots/scanning/01-dimmed.phone-dark.png`: same in dark; nothing clipped.
+- `verify/shots/scanning/02-solid.desktop-light.png`: "Reaches 4 levels · bottom-up", every card back at full opacity, no residual dim, no marks on any card.
+- `verify/shots/scanning/02-solid.phone-dark.png`: same at 400px dark; "2s to intervene" wrapped to its own line under touches.
+- `verify/shots/scanning/03-stopped-while-scanning.phone-dark.png`: after Esc during the dim: header gone, every card solid and at seed values, no arrows, no accent.
+
+### Defects fixed
+1. The dim landed with no fade. `render()` rebuilds the stack and `.scanning` was added in a `requestAnimationFrame`, which runs before the new elements get their first style pass, so there was no before-change style and the 300ms transition never ran (measured 0ms). Fixed: force one style pass (`offsetHeight`) and add the class synchronously. Assertion: time from class-on to ≤ 36% opacity is between 150 and 450ms (reduced-motion: ≤ 40ms).
+
+### Assertions added
+Five `.level.scanning`, every level body ≤ 0.36 while the heads stay at 1, no spinner/accent/entry marker while scanning; class held 1000–1500ms; lowest sampled opacity 0.30–0.36; fade-in 150–450ms; every body at exactly `1` on the first frame the class is gone (snap, not fade); World never dims again during the run and is at 1 at 3/6 and at the end. Esc while scanning: header hidden, all bodies at 1, "stopped before running", serialised state identical. Reduced motion: bodies at 0.35 on the first scanning frame, same hold, same snap.
+
+### Design review (SPEC §7)
+1. At phone the hint chips float solid over the dimmed cards during sizing, so the chips read louder than the change in progress. UX-phase candidate (already carried: chips float over cards at 400px).
+2. Dark theme dimmed cards sit at roughly 2:1 against paper; fine as a transient "paused" state, but the dark stack is already flat (1.09:1), so dimming nearly erases card edges. Carried with the dark-card item.
+3. The level heads stay solid while the bodies dim; that reads as "the level is still here, the contents are being read", which is right. No change.
+4. Carried: entry marker below the fold at desktop; spinner at 6/6; ⌘K kbd on phone; black `now` pill; citation sentences on cards; dead 16px status band; 3+1 assumptions grid; truncated rests-on/trigger; double "changed" on product cards; ⚠ glyph small.
