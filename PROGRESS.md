@@ -49,3 +49,12 @@ Append one entry per iteration. Newest at the bottom. Keep each entry short: wha
 - Design review: a changed product card says "changed" twice (chip + status row). Carried to UX phase. Older open items unchanged (3+1 assumptions grid, truncated rests-on/trigger, 16px status row).
 - Ticked check 16.
 - Next: check 17 (card expands in place with evidence links, resting-on, analogue, history; stack does not shift), then 18 (themes) and 19 (400px once the bar exists).
+
+### 5 · card expands in place
+- Detail render was already ported in iteration 2; this iteration proved it. New `verify/expand.spec.ts`, 6 tests × 4 viewports, 88 passing in total.
+- Fixed from the screenshots: cards in the same row as an open card stretched to its height (two tall empty boxes). `.cards:has(.detail) { align-items: start }` so only the open card grows; first-load rows still stretch flush. Detail "rests on" dots now mono.
+- Decision: "the rest of the stack doesn't move" is asserted as: no card or header changes x or width, nothing above or beside the open card changes y, everything below shifts by exactly the detail's height, collapse restores the layout exactly, scrollY unchanged. Row-mates may shrink to their natural height when the row stops stretching (a2 lost 18px), never grow.
+- Verify: looked at `verify/shots/expand/02-a1-open.*`, `03-a2-floating.*`, `04-w2-i1-open.*`. Report in `verify/REPORT.md`.
+- Design review carried: full citation sentences as link text on a 230px card (prose on a card); dead band above the dashed rule from the empty status row; 3+1 assumptions grid; truncated rests-on/trigger; double "changed" on product cards.
+- Ticked check 17.
+- Next: check 18 (light and dark themes legible, every colour a token, explicit body background), then 19 (400px once the bar exists).

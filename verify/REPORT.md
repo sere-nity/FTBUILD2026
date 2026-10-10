@@ -76,3 +76,34 @@ Run: 64 passed (smoke + stack + assumptions + chips at 4 viewports). New spec `v
 3. Assumptions grid still 3 + 1 at desktop (open from iteration 3).
 4. Initiative "rests on" / "trigger" truncated with ellipsis at every width (open from iteration 2).
 5. Empty `.status` row still reserves 16px on idle cards (open from iteration 2).
+
+## 2026-10-10 · Iteration 5 · Card expands in place (check 17, Flow G)
+
+Run 1: 6 failed / 18 passed on the new spec (two wrong expectations in the test: title case of "Agent-facing giving API", full analogue title "Newspapers and classifieds, 1998–2010"; and Playwright's own pre-click scroll on phone being counted as a page jump). Run 2: 88 passed. Run 3 after the CSS fix: 86 passed, 2 failed (row-mates shrank 18px to natural height, assertion was too strict). Run 4: 88 passed. New spec `verify/expand.spec.ts` (6 tests × 4 viewports).
+
+### Screenshots reviewed
+- `verify/shots/expand/01-closed.*.png` (4): first-load frames, no `.detail` anywhere.
+- `verify/shots/expand/02-a1-open.desktop-light.png` (run 2): a1 opens in place with a dashed rule, then EVIDENCE (4) as four blue links, INITIATIVES RESTING ON THIS "Agent-facing giving API · 20%", PRIOR STRATEGY box with the italic serif title and four mono labels, HISTORY in mono. Defect: a2 and a3 stretched to a1's full height, two ~700px empty white boxes beside the open card.
+- `verify/shots/expand/02-a1-open.desktop-light.png` (run 4): a2 and a3 keep their own height; a1 alone is tall; a4 sits under it as before. Levels below shifted down by exactly the detail height (asserted).
+- `verify/shots/expand/02-a1-open.desktop-dark.png`: same in dark; links in the lighter signal blue, analogue box a shade lighter than the card, all legible.
+- `verify/shots/expand/02-a1-open.phone-light.png`: single column, detail fits the card width, link text wraps, analogue grid two columns with wrapping values, no horizontal scroll.
+- `verify/shots/expand/03-a2-floating.desktop-light.png`: a2 open with one evidence link, "none · this bet is floating free of any action" in italic grey, App stores analogue, "no changes recorded".
+- `verify/shots/expand/03-a2-floating.phone-light.png`: same at 400px, nothing clipped.
+- `verify/shots/expand/04-w2-i1-open.desktop-light.png` (run 2): w2 and i1 both open. Defect: the sticky top bar was painted mid-page because the full-page capture happened while scrolled to i1. Test artefact. Defect: "ev ●●●○○" dots in i1's Rests on list rendered in the sans face, larger than the card dots.
+- `verify/shots/expand/04-w2-i1-open.desktop-dark.png` (run 4): top bar at the top, w2 shows EVIDENCE (1) + SIGNPOSTS (4) + HISTORY, i1 shows EVIDENCE (0) "⊘ no evidence attached", RESTS ON with two assumptions and mono dots, HISTORY. Row-mates keep their height.
+- `verify/shots/expand/04-w2-i1-open.phone-dark.png`: single column, both details readable, no horizontal scroll.
+
+### Defects fixed
+1. Row-mates stretched to the open card's height (grid `align-items: stretch`). Fixed with `.cards:has(.detail) { align-items: start }` so first-load rows stay flush and only an open card grows. Assertion: no card other than the opened one gains height.
+2. Detail "Rests on" dots in sans. Fixed: `.detail .dots` mono. Assertion on computed font-family.
+3. Screenshot helper now scrolls to top before a full-page capture (test only).
+
+### Assertions added
+Detail is a static descendant of the card (no dialog/overlay); four sections in order; four `https` links with `target=_blank rel=noopener`; resting-on list; analogue title + four labels, italic title; history text; click again collapses; every card and level header keeps x and width, everything above and beside keeps y, everything below shifts by exactly the detail height, collapse restores y and h exactly; scrollY unchanged on open; floating-free and no-history messages; world signposts and initiative rests-on; link click does not collapse.
+
+### Design review (SPEC §7)
+1. Evidence link text runs to four lines per source at 230px card width; it is the full citation sentence. Prose on a card, which §7 says belongs in the log. Candidate for UX phase: show the short source name (`SRC[k].t` first clause) and keep the rest in the title attribute. Not changed now because the reference shows the full text.
+2. The empty 16px status row plus the card gap leaves a visible dead band above the dashed detail rule (open since iteration 2).
+3. Assumptions grid is 3 + 1 at desktop; with a1 open the lone a4 under it reads as an afterthought (open since iteration 3).
+4. Initiative "rests on" / "trigger" truncated with ellipsis (open since iteration 2).
+5. Product "changed" said twice when changed (open since iteration 4).
