@@ -125,3 +125,5 @@ Iteration 9 done. Check 21 ticked with evidence.
 **Commits:** `bb15deb` fix + spec + shots + tick; `441bd12` README + PROGRESS. `run.log` left uncommitted (run.sh autosave owns it).
 
 **Next:** check 22, intervene window + Esc leaves state unchanged. Then 23, needs new render work for `proposed` ghost.
+autosaved
+=== iteration 9  01:47:02 ===

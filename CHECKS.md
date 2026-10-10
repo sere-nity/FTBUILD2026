@@ -21,7 +21,7 @@ Tick a box only when `npm run verify` evidence (assertions + screenshots you hav
 ## Runner and state machine
 - [x] Job header appears with phase, "Reaches N levels", k/n cells, Stop button, progress bar
 - [x] `scanning` dims every level for ~1.1s, then untouched levels snap back solid
-- [ ] 2-second intervene window after sizing; Esc during it leaves state unchanged
+- [x] 2-second intervene window after sizing; Esc during it leaves state unchanged
 - [ ] `preparing` shows spinner + per-cell note; `proposed` shows old value ghosted beside new; `settled` keeps ↑/↓ and accent rule
 - [ ] Log line for each cell appears in sync with that cell settling (assert ordering)
 - [ ] Levels touched by a run expand; Product and Code collapse again when the run ends

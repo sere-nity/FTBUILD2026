@@ -217,3 +217,31 @@ Five `.level.scanning`, every level body ≤ 0.36 while the heads stay at 1, no 
 2. Dark theme dimmed cards sit at roughly 2:1 against paper; fine as a transient "paused" state, but the dark stack is already flat (1.09:1), so dimming nearly erases card edges. Carried with the dark-card item.
 3. The level heads stay solid while the bodies dim; that reads as "the level is still here, the contents are being read", which is right. No change.
 4. Carried: entry marker below the fold at desktop; spinner at 6/6; ⌘K kbd on phone; black `now` pill; citation sentences on cards; dead 16px status band; 3+1 assumptions grid; truncated rests-on/trigger; double "changed" on product cards; ⚠ glyph small.
+
+## 2026-10-10 · Iteration 10 · 2-second intervene window; Esc leaves state unchanged (check 22)
+
+Run 1 (intervene only): 20 passed. Run 2 (full, after the Esc reorder): 176 passed. New spec `verify/intervene.spec.ts` (5 tests × 4 viewports) installs a per-frame watcher before the chip is clicked and records when the plan title appears, when the first cell count replaces it, and on every frame in between whether any spinner, accent, dim or open quiet level showed, or the serialised state differed.
+
+Measured (one-off script): window 2000ms at desktop and at phone. Esc → header hidden: 301/303ms before the reorder (the log line's 260ms pause ran before `finish()`), now under 300ms asserted, a few frames in practice. Before the abortable wait: Esc was honoured only when the 2s timer ran out, so the early-Esc assertion fails on the old runner (negative check: "Expected: hidden, Received: visible").
+
+### Screenshots reviewed
+- `verify/shots/intervene/01-window.desktop-light.png`: header "Reaches 4 levels · bottom-up", "touches: 1 milestone, 2 product flows, 1 initiative, 2 assumptions", "2s to intervene" in ochre, "Stop · Esc" at the far right, progress bar at ~12%. Every card solid at seed values, no spinner, no accent; Product and Code still collapsed (below the fold). Log: MILESTONE entry with "sizing…". The clicked hint chip keeps its focus ring.
+- `verify/shots/intervene/01-window.desktop-dark.png`: same in dark; ochre warning and Stop outline both legible.
+- `verify/shots/intervene/01-window.phone-light.png`: 400px: header is three rows (title, touches wrapping to two lines, "2s to intervene" alone on the third), bar beneath; first card starts at y≈280. Nothing clipped.
+- `verify/shots/intervene/01-window.phone-dark.png`: same in dark.
+- `verify/shots/intervene/02-esc-early.desktop-dark.png`: after Esc at the start of the window: header gone, stack at seed values, log entry reads "sizing…" then "stopped before running" with the ochre rule. Two lines, nothing else.
+- `verify/shots/intervene/03-esc-late.phone-light.png`: after Esc 1.5s into the window at 400px: header gone, cards solid, no marks; log is below the fold.
+
+### Defects fixed
+1. Esc/Stop during sizing or the window took effect only when the current timer ran out (up to 2s of "Reaches…" after the key). `wait()` in `scripted.ts` now races the timer against `stop()`. Assertion: header hidden < 300ms after Esc at the start of the window.
+2. After a stop, the "stopped before running" log line paused 260ms before the header was removed, so the header outlived the log's verdict. `finish()` now runs first and the line lands with no pause.
+
+### Assertions added
+Plan title, touches, "2s to intervene", Stop and entry marker shown with zero spinners/accents/dim, quiet levels collapsed and state identical; window 1900–2400ms from plan to "0/6 cells done" with no marked frame and no changed-state frame; run then proceeds and state differs at the end. Esc at the start: header hidden < 300ms, warn line, entry has exactly two lines, idle state, state identical, still identical 3s later, log entry count unchanged. Esc at 1.5s: same. Esc when idle: no header, no log entry. Esc with the bar focused during the window: stops. Enter with text in the bar during the window: ignored, run proceeds to 6/6, entry count stays two.
+
+### Design review (SPEC §7)
+1. The two halves of the window's message sit at opposite edges at desktop: "2s to intervene" bottom-left, "Stop · Esc" top-right, ~1100px apart. The one thing the user can do is split from the reason to do it. UX-phase candidate: move the warning next to the button, or the button next to the warning.
+2. "2s to intervene" is static while the window drains; the progress bar moves only from ~6% to ~12%, so nothing on screen shows the window closing. UX-phase candidate: keep the text, let the bar express the 2s.
+3. At 400px the header is three rows plus the three-row top bar, ~250px of chrome before the first card during the window. Carried with the phone top-bar item.
+4. The clicked hint chip keeps a blue focus ring for the whole run, so it reads as "selected" rather than "pressed". Focus states check (design review section) will decide `:focus-visible` rules.
+5. Carried: entry marker below the fold at desktop; spinner at 6/6; hint chips float over cards at phone; ⌘K kbd on phone; dark cards 1.09:1; black `now` pill; citation sentences on cards; dead 16px status band; 3+1 assumptions grid; truncated rests-on/trigger; double "changed" on product cards; ⚠ glyph small.

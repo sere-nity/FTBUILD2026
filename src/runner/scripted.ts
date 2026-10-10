@@ -8,9 +8,28 @@ import { TIMING } from './timing';
 
 type Plan = { kind: string; dir: Direction; levels: Level[]; touches: string };
 
-/** Ask the current run to stop. Honoured at the next await. */
+let wake: (() => void) | null = null;
+
+/** Ask the current run to stop. Before anything has changed (sizing, intervene) this ends the wait at once. */
 export function stop(): void {
-  if (store.job) store.abort = true;
+  if (!store.job) return;
+  store.abort = true;
+  wake?.();
+}
+
+/** Sleep that ends early when `stop()` is called. Resolves true if stopped. */
+function wait(ms: number): Promise<boolean> {
+  return new Promise((resolve) => {
+    const t = setTimeout(() => {
+      wake = null;
+      resolve(store.abort);
+    }, ms);
+    wake = () => {
+      clearTimeout(t);
+      wake = null;
+      resolve(true);
+    };
+  });
 }
 
 /**
@@ -21,12 +40,10 @@ async function sizing(plan: Plan): Promise<boolean> {
   store.abort = false;
   store.job = { ...plan, phase: 'sizing', done: 0, total: 0 };
   render();
-  await sleep(TIMING.scanning);
-  if (store.abort) return false;
+  if (await wait(TIMING.scanning)) return false;
   store.job.phase = 'intervene';
   render();
-  await sleep(TIMING.intervene);
-  return !store.abort;
+  return !(await wait(TIMING.intervene));
 }
 
 /** preparing: spinner + one-line note of what the agent is doing for this cell. */
@@ -86,8 +103,9 @@ export async function runMilestone(text: string): Promise<void> {
     touches: '1 milestone, 2 product flows, 1 initiative, 2 assumptions',
   });
   if (!ok) {
-    await logLine(e, 'stopped before running', 'warn');
-    return finish();
+    // Header first, then the log line: Esc should read as instant.
+    finish();
+    return logLine(e, 'stopped before running', 'warn', 0);
   }
   clearTrends();
   store.job!.phase = 'running';
