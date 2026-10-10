@@ -24,3 +24,12 @@ Append one entry per iteration. Newest at the bottom. Keep each entry short: wha
 ## UX log
 
 (begins once CHECKS.md is green)
+
+### 2 · stack and cards
+- Ported `render()`, `renderCard()`, `renderDetail()`, `renderSnaps()` from the reference into `src/render.ts`. State store, LEVELS, seed/sources/analogues loaded from `data/*.json` in `src/state.ts`. Shell (top bar, job header, read-only banner, stack, log) built in `src/main.ts`. Full reference stylesheet ported to `src/style.css` with every colour as a token (added `--shadow`).
+- Card click toggles detail in place; "expand" link on compact levels works. Not yet verified by Playwright (next iteration, check 17).
+- Verify: 32 passed at 4 viewports. Screenshots in `verify/shots/stack/`. Looked at all four: levels in order, Product/Code compact, chips tinted correctly, dark theme legible, phone single column with no horizontal scroll.
+- Defects fixed with assertions: world "axes" value was truncated at desktop (now wraps); phone top bar orphaned "Save snapshot" on its own row (buttons grouped).
+- Ticked: five levels, Product/Code collapsed, card component. Left 400px check unticked because the bar does not exist yet.
+- Decision: kept the empty `.status` row's 16px min-height on idle cards (reference does the same) so cards do not jump when the spinner appears during a run. Revisit in UX phase.
+- Next: Assumptions ⚠ gap check, chip enums, card expand in place (checks 15–17), then themes and 400px once the bar exists.
