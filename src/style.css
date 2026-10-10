@@ -317,7 +317,9 @@ main {
   padding: 10px 14px;
   box-shadow: 0 10px 30px var(--shadow);
 }
+.prompt:focus-within { border-color: var(--signal); }
 .prompt .pen { color: var(--ink-3); font-family: var(--mono); }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .prompt input { flex: 1; min-width: 0; border: 0; background: none; font: inherit; font-size: 14px; color: var(--ink); outline: none; }
 .prompt input::placeholder { color: var(--ink-3); }
 .prompt .kbd { font-family: var(--mono); font-size: 10px; color: var(--ink-3); border: 1px solid var(--rule); border-radius: 4px; padding: 1px 5px; }

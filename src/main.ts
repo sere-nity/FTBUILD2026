@@ -1,8 +1,10 @@
 import './style.css';
 import { store, visible } from './state';
 import { render } from './render';
+import { initBar } from './bar';
 
-document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
+const app = document.querySelector<HTMLDivElement>('#app')!;
+app.innerHTML = `
   <header class="top">
     <div class="brand">Waypoint<small>Stewardship · giving platform</small></div>
     <div class="snaps" id="snaps"></div>
@@ -24,6 +26,7 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
     <aside class="log"><h3>Log</h3><div id="log"></div></aside>
   </main>
 `;
+initBar(app);
 
 // Stack clicks: expand a collapsed level, or toggle a card's detail in place.
 document.querySelector('#stack')!.addEventListener('click', (ev) => {
