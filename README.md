@@ -26,6 +26,8 @@ npm run verify     # Playwright tests at desktop + phone, light + dark
 
 Light and dark follow the OS (`prefers-color-scheme`); force one with `<html data-theme="light|dark">`. Every colour is a token in the `:root` blocks at the top of `src/style.css`; nothing else in the app may name a colour, and `npm run verify` fails if it does. Text is checked for 4.5:1 contrast in both themes.
 
+The prompt bar is fixed to the bottom with the five hint chips above it. `⌘K` / `Ctrl+K` focuses it; Enter submits and clears it. The page pads its bottom by the bar's measured height, so at 400px (where the chips wrap to three rows) nothing hides behind it and the log sits below the stack. Intent routing is not wired yet; submitting currently does nothing but clear the field.
+
 ## Kit contents
 - `CLAUDE.md` operating rules for the unattended build
 - `SPEC.md` product spec, data model, flows, look, backlog

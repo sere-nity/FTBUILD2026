@@ -68,3 +68,14 @@ Append one entry per iteration. Newest at the bottom. Keep each entry short: wha
 - Design review carried: dark cards 1.09:1 against paper (flat stack in dark); heavier keys now closer in weight to values; black `now` pill is the loudest thing on an idle screen; plus the five open items from earlier iterations.
 - Ticked check 18.
 - Next: check 19 (400px: no horizontal scroll, log below stack, bar fits). Needs the prompt bar to exist, so build the bar shell from the reference (`.barwrap`, hints, input, ⌘K kbd) as the smallest change, without intent routing yet.
+
+### 7 · 400px: no horizontal scroll, log below stack, bar fits
+- Built the prompt bar shell in `src/bar.ts` from the reference: `.barwrap` with five hint chips (same text and titles), `✎` prompt with placeholder, `⌘K` kbd, ⌘K/Ctrl+K focus, Enter clears. Submit goes through `setSubmit()` so intent routing (Bar checks) plugs in later; for now it only clears the field. Added a visually hidden label for the input and a signal border on `.prompt:focus-within` since the input itself has no outline.
+- New `verify/phone.spec.ts` (5 tests × 4 viewports, 128 passing in total).
+- Fixed from the screenshots: the bar covered the "Log" heading at 400px (hints wrap to three rows, taller than the fixed 120px padding). `bar.ts` publishes the measured bar height as `--bar-h` via ResizeObserver; stack/log pad by it, and at ≤860px only the log carries it so there is no dead band between stack and log. Negative check: old CSS fails the new assertion by 46px.
+- Decision: moved Playwright `outputDir` to `verify/.out` (ignored). Running any single spec was wiping every screenshot set in `verify/shots/` and leaving failure artefacts there. Full `npm run verify` regenerated all sets; committed.
+- Verify: looked at `verify/shots/phone/03-bar-at-bottom.*`, `04-bar-focused.phone-dark`, `01-first-load.phone-dark`. Report in `verify/REPORT.md`.
+- Design review new items: sticky top bar is three rows at phone (~125px) plus a ~170px bar leaves ~500px of content; hint chips float over cards with see-through gaps; ⌘K kbd shows on phone. All UX-phase candidates.
+- README: bar paragraph in "Look".
+- Ticked check 19. Stack-and-cards section complete.
+- Next: Runner section, check 20 (job header with phase, "Reaches N levels", k/n cells, Stop, progress bar). Markup exists in `main.ts`; needs `runner/scripted.ts` to drive it: start with a `startJob/endJob` + job state in the store and the Flow A sizing step, then the state machine checks 21–26 build on it.
