@@ -84,13 +84,13 @@ async function settle(id: string, mutate: (c: Card) => void, why: string): Promi
   c._prev = prev;
   c._phase = 'proposed';
   store.state.changed[id] = why;
+  if (store.job) store.job.done++; // applied immediately, so it counts now (a stop mid-ghost keeps it)
   render();
   await tick(TIMING.proposed);
   fadeGhosts(id);
   await tick(TIMING.ghostFade);
   delete c._prev;
   delete c._phase;
-  if (store.job) store.job.done++;
   render();
 }
 
