@@ -64,7 +64,8 @@ export function jobText(j: Job): { title: string; meta: string; pct: number } {
   const reach = `Reaches ${plural(j.levels.length, 'level')}`;
   if (j.phase === 'sizing') return { title: 'Sizing change…', meta: 'scanning all levels', pct: 5 };
   if (j.phase === 'intervene') {
-    return { title: `${reach} · ${dir}`, meta: `touches: ${esc(j.touches)} &nbsp;·&nbsp; <span class="warn">2s to intervene</span>`, pct: 12 };
+    // Two flex children: at phone width the warning wraps to its own line with no stray separator.
+    return { title: `${reach} · ${dir}`, meta: `<span>touches: ${esc(j.touches)}</span><span class="warn">2s to intervene</span>`, pct: 12 };
   }
   const frac = j.total ? j.done / j.total : 0;
   return { title: `${reach} · ${j.done}/${j.total} cells done`, meta: `${dir} · ${esc(j.kind)}`, pct: 12 + frac * 88 };

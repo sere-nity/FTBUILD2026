@@ -19,7 +19,7 @@ Tick a box only when `npm run verify` evidence (assertions + screenshots you hav
 - [x] 400px wide: no horizontal scroll, log moves below the stack, bar fits
 
 ## Runner and state machine
-- [ ] Job header appears with phase, "Reaches N levels", k/n cells, Stop button, progress bar
+- [x] Job header appears with phase, "Reaches N levels", k/n cells, Stop button, progress bar
 - [ ] `scanning` dims every level for ~1.1s, then untouched levels snap back solid
 - [ ] 2-second intervene window after sizing; Esc during it leaves state unchanged
 - [ ] `preparing` shows spinner + per-cell note; `proposed` shows old value ghosted beside new; `settled` keeps ↑/↓ and accent rule

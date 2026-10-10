@@ -52,6 +52,9 @@ test.describe('job header', () => {
     await expect(title).toHaveText('Reaches 4 levels · bottom-up');
     await expect(meta).toContainText('touches: 1 milestone, 2 product flows, 1 initiative, 2 assumptions');
     await expect(meta.locator('.warn')).toHaveText('2s to intervene');
+    // No separator glyph that can be orphaned at a line end when the meta wraps at 400px.
+    await expect(meta).not.toContainText('·');
+    await expect(meta.locator('> span')).toHaveCount(2);
     await expect(page.locator('.level.scanning')).toHaveCount(0);
     await expect(page.locator('.level[data-level="code"] [data-entry]')).toHaveText('◀ entered here');
     await expect(page.locator('.level:not([data-level="code"]) [data-entry]')).toHaveText(['', '', '', '']);

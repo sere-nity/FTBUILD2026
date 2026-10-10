@@ -159,3 +159,34 @@ Document `scrollWidth ≤ clientWidth` and no element's right edge past the view
 2. Hint chips float over card content with transparent gaps between them (three rows at phone). Matches the reference. UX-phase candidate: a short paper fade behind the barwrap so the chips do not sit on top of a dot bar.
 3. The ⌘K kbd shows on phone where there is no keyboard shortcut. UX-phase candidate: hide `.kbd` below 860px.
 4. Carried: dark cards 1.09:1 against paper; black `now` pill loudest element; full citation sentences on cards; dead 16px status band; 3+1 assumptions grid; truncated rests-on/trigger; double "changed" on product cards; ⚠ glyph small.
+
+## 2026-10-10 · Iteration 8 · Job header: phase, "Reaches N levels", k/n cells, Stop, progress bar (check 20)
+
+Run 1 (full): 132 passed, 12 failed. Three causes: the spec's `.entry` selector also matched the five level-head entry-marker spans (test defect); the title never reached 7/7 because the reference counts 7 cells but settles six (c1, p1, p2, i1, a1, a2), so the total is now 6; Stop during the intervene window still changed state (trends cleared before sizing, transient keys written as `null`). Run 2 (full): 144 passed. Run 3 (job + theme after the meta fix): 36 passed. New spec `verify/job.spec.ts` (4 tests × 4 viewports) drives Flow A from the hint chip at real demo timing.
+
+### Screenshots reviewed
+- `verify/shots/job/01-sizing.desktop-light.png`: job header under the top bar: spinner, "Sizing change…", "scanning all levels", Stop · Esc in ochre outline at the right, progress bar a short signal stub. Every card in every level dimmed to ~35%. Log: new MILESTONE entry on top with "sizing…", Jul baseline entry below it.
+- `verify/shots/job/01-sizing.phone-dark.png`: same at 400px, header is three rows (title + Stop, meta, bar). Dimmed cards legible as "paused", not broken.
+- `verify/shots/job/02-reaches.desktop-light.png`: "Reaches 4 levels · bottom-up", meta "touches: 1 milestone, 2 product flows, 1 initiative, 2 assumptions" then "2s to intervene" in ochre; levels solid again; bar at 12%. The "◀ entered here" marker is on the Code level, below the fold at 1280×800.
+- `verify/shots/job/02-reaches.phone-dark.png` (run 2): meta wrapped with a lone "·" left dangling at the end of the first line before "2s to intervene" on its own line.
+- `verify/shots/job/02-reaches.phone-light.png` (run 3): touches on two lines, "2s to intervene" on the third, no separator glyph. Desktop shows the two with a 14px gap.
+- `verify/shots/job/03-cells.desktop-dark.png`: "Reaches 4 levels · 3/6 cells done", meta "bottom-up · milestone", bar just past half. Log has sizing, reach line (signal), code line.
+- `verify/shots/job/03-cells.phone-light.png`: same at 400px; header two rows plus bar.
+- `verify/shots/job/04-done.desktop-light.png`: "6/6 cells done", bar full width, a1 and a2 carry the accent rule with "changed · exposure ↑" / "changed · now load-bearing", Assumptions head reads "2 changed", Initiatives "1 changed". Spinner in the header still turning at 6/6.
+- `verify/shots/job/05-after.desktop-light.png`: header gone, stack moved up by its height, level counts show changed totals, log entry complete with both source links and the warn line for a2.
+- `verify/shots/job/06-stopped.phone-light.png`: after Stop in the window: header hidden, every card at seed values, no arrows, no accent.
+
+### Defects fixed
+1. Stopped run mutated state (trend/trendOn set to null on every card before sizing; `_status`/`_note` left as null). Trends now clear only once the run proceeds; transient keys are deleted. Assertion: serialised state identical before and after a stopped run.
+2. k/n total said 7 for six settling cells (reference bug). Total is 6. Assertion: title reaches "6/6 cells done" and the bar passes 99%.
+3. Orphaned "·" in the intervene meta at 400px. Meta is now two flex children with no separator. Assertion: no "·" in the meta, exactly two child spans.
+4. Test defect: `.entry` matched level-head spans; log selectors scoped to `#log .entry`.
+
+### Assertions added
+Header hidden when idle; visible with spinner, "Sizing change…", "scanning all levels", Stop · Esc, five `.level.scanning`, bar between 0 and 10%; then "Reaches 4 levels · bottom-up", touches text, "2s to intervene" in `.warn`, zero scanning levels, entry marker on Code only, bar grew; then "0/6", "1/6", "3/6", "6/6 cells done" with the bar growing each time and "bottom-up · milestone" in the meta; header hidden after the run, markers cleared, no spinner left on any card. Stop in the window: header hidden, "stopped before running" warn line, state unchanged. Second submit during a run ignored (log entry count stays 2); Esc stops.
+
+### Design review (SPEC §7)
+1. The entry marker ("◀ entered here") sits on Code, which is below the fold at desktop during the 2-second window, so the one moment the spec calls out most is partly invisible. UX-phase candidate: scroll the entry level into view when the plan is shown, or put the direction in the header only.
+2. The header spinner keeps turning at "6/6 cells done" while the last log lines land. Minor; a done state could stop it.
+3. During sizing at phone, the header plus top bar push the first card to y≈270, so only one and a half dimmed cards show the "scanning" state. Acceptable.
+4. Carried: hint chips float over cards at 400px; ⌘K kbd on phone; dark cards 1.09:1; black `now` pill; full citation sentences on cards; dead 16px status band; 3+1 assumptions grid; truncated rests-on/trigger; double "changed" on product cards; ⚠ glyph small.
