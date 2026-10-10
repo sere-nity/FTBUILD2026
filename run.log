@@ -1,2 +1,5 @@
 === iteration 1  00:59:23 ===
 error: unknown option '--permission-prompts'
+autosaved
+=== iteration 1  01:00:01 ===
+Iteration 1 complete. Scaffold done: Vite + TS builds, Playwright installed with 4-viewport smoke test passing, seed data ported, all 4 scaffold checks ticked. Next iteration picks up "Stack and cards" — five levels rendering with card component.

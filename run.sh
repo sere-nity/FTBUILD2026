@@ -24,7 +24,6 @@ for i in $(seq 1 "$MAX"); do
   claude -p "$(cat PROMPT.md)" \
     --permission-mode acceptEdits \
     --allowedTools "Bash,Read,Edit,Write,Glob,Grep" \
-    --permission-prompts none \
     --output-format text \
     2>&1 | tee -a "$LOG"
 
