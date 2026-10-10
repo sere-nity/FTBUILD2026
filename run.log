@@ -127,3 +127,16 @@ Iteration 9 done. Check 21 ticked with evidence.
 **Next:** check 22, intervene window + Esc leaves state unchanged. Then 23, needs new render work for `proposed` ghost.
 autosaved
 === iteration 9  01:47:02 ===
+Iteration 10 done. Check 22 ticked with evidence.
+
+**Did:** `stop()` now wakes abortable `wait()` in `src/runner/scripted.ts`, so Esc/Stop during sizing or window drops header same frame (was up to 2s). `finish()` runs before "stopped before running" line. New `verify/intervene.spec.ts`: 5 tests × 4 viewports, per-frame watcher.
+
+**Verify:** 176 passed. Window measured 2000ms both widths, zero marked/changed frames. Negative check: old runner fails early-Esc assertion. Screenshots in `verify/shots/intervene/` reviewed, report in `verify/REPORT.md`.
+
+**Decision:** bar input during window ignored (reference behaviour; Bar check wants bar disabled whole run). Esc/Stop are intervene controls.
+
+**Design review new:** warning and Stop ~1100px apart at desktop; nothing shows window draining; clicked hint chip keeps focus ring. All carried to UX phase.
+
+**Commits:** `0c17ca9` feat + spec + shots + tick; `beab915` PROGRESS.
+
+**Next:** check 23. `proposed` ghost of old value does not exist yet. Also known gap: runner never reads `store.abort` after window, so Esc mid-run no-op until end. Fold into 23/24.
