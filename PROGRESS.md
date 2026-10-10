@@ -33,3 +33,11 @@ Append one entry per iteration. Newest at the bottom. Keep each entry short: wha
 - Ticked: five levels, Product/Code collapsed, card component. Left 400px check unticked because the bar does not exist yet.
 - Decision: kept the empty `.status` row's 16px min-height on idle cards (reference does the same) so cards do not jump when the spinner appears during a run. Revisit in UX phase.
 - Next: Assumptions ⚠ gap check, chip enums, card expand in place (checks 15–17), then themes and 400px once the bar exists.
+
+### 3 · assumptions: evidence/belief bars and ⚠
+- Render code already drew two separate dot bars and the ⚠ at |ev − us| ≥ 2 (ported in iteration 2). Work this iteration was proving it: new `verify/assumptions.spec.ts`, 12 tests across 4 viewports, 44 passing in total.
+- Decision: added a test hook `window.__waypoint = { store, render }` in `src/main.ts`. The seed has no gap ≥ 2 on first load, so tests set `a2.ev` and re-render to reach the flagged state. Later checks (runner states, compare, snapshots) can use the same hook instead of relying on timing.
+- Verify: looked at `verify/shots/assumptions/02-gap-3.*` at all four viewports. ⚠ sits beside the belief bar on a2 only, ochre, not clipped, no layout shift. Report in `verify/REPORT.md`.
+- Design review defects carried: ⚠ glyph easy to miss at desktop (matches reference, UX phase); assumptions grid 3 + 1 with a lonely fourth card; truncated rests-on/trigger values; 16px reserved status row.
+- Ticked check 15.
+- Next: check 16 (chips only from SPEC §3 enums), then 17 (card expands in place, stack does not shift).
