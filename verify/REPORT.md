@@ -329,3 +329,29 @@ First load: `expanded` is {world, assumptions, initiatives: true; product, code:
 2. A level opens and closes as a snap: three cards push Code down ~150px on one frame, and the stack jumps back on the frame the header goes. §7 allows 200–400ms motion on state changes; this is a state change with none. Candidate: fade the cards in over ~250ms (opacity only, no height animation), and keep the snap on close.
 3. The Product compact line wraps at desktop after the run, leaving "expand" alone on the second line (`03-collapsed-after.desktop-dark`). Candidate: shorter notes on the compact line, or put "expand" first.
 4. Carried: header reaches 6/6 before the last ghost goes; "source" orphaned on its own line at 320px; a1/a2 log lines run 4–6 visual lines; job header not sticky; proposed card says the move twice; new value jumps left when the ghost goes; product notes cut mid-word; warning and Stop at opposite edges; window not shown draining; phone chrome ~250px; hint chip focus ring through the run; hint chips float over cards and the log at phone; ⌘K kbd on phone; dark cards 1.09:1; black `now` pill; citation sentences on cards; dead 16px status band; 3+1 assumptions grid; ⚠ glyph small.
+
+## 2026-10-10 · Iteration 14 (manual, client request) · LLM runner + Express proxy (backlog 4)
+
+### Screenshots reviewed
+- `verify/shots/llm/01-sizing-while-calling.desktop-light.png`: job header "Sizing change… / scanning all levels" with Stop · Esc, log entry MILESTONE with "sizing…" while the fetch to /api/plan is in flight. Stack unchanged. Cards not yet visibly dimmed (shot lands inside the 300ms fade).
+- `verify/shots/llm/01-sizing-while-calling.phone-light.png`: same at 400px; header fits on two lines, Stop sits right.
+- `verify/shots/llm/02-fallback-line.desktop-dark.png`: amber-barred line "llm runner unavailable (proxy not reachable) · using the scripted runner", then a second "sizing…" as the scripted flow starts in the same entry. Dark tokens correct, contrast fine.
+- `verify/shots/llm/02-fallback-line.phone-dark.png`: same at 400px; the warn line wraps to three lines but stays inside the log column.
+- `verify/shots/llm/03-scripted-end-state.desktop-light.png`: Flow A end state: Assumptions "2 changed", a1 exposure 2 ↑, a2 "now load-bearing"; job header gone.
+- `verify/shots/llm/03-scripted-end-state.phone-light.png`: same at 400px; header gone, "2 changed" visible, no horizontal scroll.
+
+### Test results
+- `verify/llm.spec.ts`: 8/8 (2 tests × 4 viewports). Flag off → zero `/api` requests. Flag on + proxy refused → warn line in the same log entry, scripted Flow A runs to its end state.
+- Existing suite with the sizing split: 205/207 on the first run while the llm spec and a vite build ran concurrently; the 2 failures were both intervene timing tests on desktop-dark. `verify/intervene.spec.ts` alone: 20/20. Treated as load flakiness, not a regression.
+- Server smoke (no key): `GET /api/health` → `{ok:true, model, key:false}`; `POST /api/plan {}` → 400; full body without a key → 500 with the SDK's auth message. The browser falls back on every non-200.
+- Not verified: a real model call. No `ANTHROPIC_API_KEY` on this machine and `ant` is not installed. The proxy's request shape follows the current SDK docs (structured output via `output_config.format`, refusal fallback beta), but nobody has seen a plan come back yet.
+
+### Defects
+- Two "sizing…" lines in one entry when the fallback fires (LLM sizing, then the scripted runner's own). Honest but redundant. UX candidate: the fallback could skip the second line.
+- The sizing dim is not visible on the first shot because of the 300ms fade; not a defect in the runner, but the "levels dim while the model thinks" moment is the whole point of starting sizing before the call, so it is worth a later screenshot timed after the fade.
+- `class="entry"` is used both for log entries and for the level header's "◀ entered here" marker. Specs must scope to `#log .entry`. Rename candidate, not changed here.
+
+### Design review (SPEC §7)
+- The fallback line is the only amber line in the entry and carries two ideas (why, and what happens next) in one sentence of 11 words. Within the two-line budget at desktop; three at phone.
+- No new colour, border or icon added. The proxy adds no UI.
+- The second "sizing…" is the weakest moment of the fallback: the reader sees the same word twice 1s apart.
