@@ -5,3 +5,18 @@ autosaved
 Iteration 1 complete. Scaffold done: Vite + TS builds, Playwright installed with 4-viewport smoke test passing, seed data ported, all 4 scaffold checks ticked. Next iteration picks up "Stack and cards" — five levels rendering with card component.
 autosaved
 === iteration 1  01:08:11 ===
+Iteration 2 done. Three commits on main.
+
+**Built**: five-level stack from seed. `render()` / `renderCard()` / `renderDetail()` ported from reference into `src/render.ts`. Store + LEVELS + JSON data loading in `src/state.ts`. Shell markup in `src/main.ts`. Full ledger stylesheet in `src/style.css`, all colours tokens.
+
+**Verify**: 32 Playwright tests pass, 4 viewports. Screenshots in `verify/shots/stack/`. Looked at all four. Levels in order, Product/Code compact with "expand", chips tinted right, dark legible, phone single column, no horizontal scroll.
+
+**Defects fixed, assertions added**:
+- World "axes" value truncated at desktop. Now wraps.
+- Phone top bar orphaned "Save snapshot" on third row. Buttons grouped.
+
+**Ticked**: five levels, Product/Code collapsed, card component. Left 400px check unticked since bar not built yet.
+
+**Open defects noted in REPORT.md**: empty status row reserves 16px on idle cards (kept, stops jump on spinner); initiative rests-on/trigger truncated (matches reference); log column empty until baseline entry exists.
+
+**Next iteration**: ⚠ gap check, chip enums, card expand in place (checks 15–17).
