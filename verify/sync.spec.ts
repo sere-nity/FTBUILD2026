@@ -18,18 +18,21 @@ declare global {
 
 // Each log line of Flow A, in order, with the cells it reports on (none for the preamble/coda).
 const LINES: { starts: string; cells: string[] }[] = [
-  { starts: 'sizing…', cells: [] },
-  { starts: 'reaches 4 levels', cells: [] },
-  { starts: 'code:', cells: ['c1'] },
-  { starts: 'product:', cells: ['p1', 'p2'] },
-  { starts: 'initiative:', cells: ['i1'] },
-  { starts: 'assumption “AI assistants', cells: ['a1'] },
-  { starts: 'assumption “vendor', cells: ['a2'] },
-  { starts: 'world:', cells: [] },
+  { starts: 'Sizing the change…', cells: [] },
+  { starts: 'Reaches 4 levels, moving up from Code.', cells: [] },
+  { starts: 'Code: dj/*, 31 files', cells: ['c1'] },
+  { starts: 'Product: AI DJ and Home changed.', cells: ['p2', 'p1'] },
+  { starts: 'Bet “AI DJ v2” is now fully shipped (60% → 100%).', cells: ['i1'] },
+  { starts: 'Belief “Listeners will let an AI assistant choose for them”: more is riding on it now.', cells: ['a1'] },
+  { starts: 'Belief “Labels keep licensing on current terms” now carries 3 bets', cells: ['a4'] },
+  { starts: 'World: no scenario moved.', cells: [] },
 ];
 // A few frames: the settle's render and the line's append share a task, so the gap is ~0 in
 // practice; the bound leaves room for a busy machine running four browsers.
 const FEW_FRAMES = 150;
+
+/** The primary "Try" hint submits Flow A. (`#go` in the intro carries the same text, so scope to the bar.) */
+const startFlowA = (page: Page) => page.locator('#hints .hint').filter({ hasText: 'shipped AI DJ v2' }).click();
 
 const shot = (page: Page, name: string, frame: string) =>
   page.screenshot({ path: `verify/shots/sync/${frame}.${name}.png`, fullPage: false });
@@ -57,9 +60,10 @@ const watch = (page: Page) =>
           w.events.push({ id, phase, at: now });
         }
       }
-      // The run's entry is the newest one of kind "milestone"; lines are appended to it.
+      // The run's entry is the newest one of kind "you shipped"; lines are appended to it.
+      // (`.level-head .entry` also exists, so the log's entries are scoped to #log.)
       const entry = [...document.querySelectorAll('#log .entry')].find(
-        (e) => e.querySelector('.eh .kind')?.textContent === 'milestone',
+        (e) => e.querySelector('.eh .kind')?.textContent === 'you shipped',
       );
       if (entry) {
         const ls = entry.querySelectorAll<HTMLElement>('.l');
@@ -84,15 +88,18 @@ test.describe('log line in sync with the settle', () => {
     await page.goto('/');
     await page.locator('.level').first().waitFor();
     await watch(page);
-    await page.getByRole('button', { name: 'shipped the agent-facing giving API' }).click();
+    await startFlowA(page);
 
-    // Screenshot the moment a1 settles: its line is in the log, a2 is still preparing.
+    // Screenshot the moment a1 settles: its line is in the log, a4 is still preparing.
     const a1 = page.locator('.card[data-id="a1"]');
     await expect(a1).toHaveClass(/proposed/, { timeout: 40_000 });
     await expect(a1).not.toHaveClass(/proposed/, { timeout: 5_000 });
     await expect(a1).toHaveClass(/changed/);
     const entry = page.locator('#log .entry').first();
-    await expect(entry.locator('.l').nth(5)).toContainText('assumption “AI assistants mediate discovery”: exposure ↑');
+    await expect(entry.locator('.eh .kind')).toHaveText('you shipped');
+    await expect(entry.locator('.eh b')).toHaveText('shipped AI DJ v2');
+    await expect(entry.locator('.eh .t')).toHaveText(/^\d\d:\d\d$/);
+    await expect(entry.locator('.l').nth(5)).toContainText('Belief “Listeners will let an AI assistant choose for them”: more is riding on it now.');
     await expect(entry.locator('.l')).toHaveCount(6);
     const phone = testInfo.project.name.startsWith('phone');
     if (phone) {
@@ -135,7 +142,7 @@ test.describe('log line in sync with the settle', () => {
         expect(lastPhase.phase, `${id} phase when its line appeared`).toBe('settled');
       }
       // The next level starts only after this line has landed (levels run in sequence; cells
-      // within a level, like a1 and a2, prepare together).
+      // within a level, like a1 and a4, prepare together).
       const next = LINES[i + 1];
       if (next?.cells.length && next.cells[0][0] !== L.cells[0][0]) {
         expect(at(w, next.cells[0], 'preparing'), `${next.cells[0]} prepared before the ${L.starts} line`).toBeGreaterThan(line.at);
@@ -143,17 +150,19 @@ test.describe('log line in sync with the settle', () => {
     }
     testInfo.annotations.push({ type: 'settle→line ms', description: JSON.stringify(Object.fromEntries(Object.entries(gaps).map(([k, v]) => [k, Math.round(v)]))) });
 
-    // 4 · one line for two flows: p1 and p2 are proposed and settled together, so neither
+    // 4 · one line for two flows: p2 and p1 are proposed and settled together, so neither
     // sits settled with no line. (Regression: p2 settled 900ms after p1, so p1's line was late.)
     expect(Math.abs(at(w, 'p1', 'proposed') - at(w, 'p2', 'proposed'))).toBeLessThanOrEqual(50);
     expect(Math.abs(at(w, 'p1', 'settled') - at(w, 'p2', 'settled'))).toBeLessThanOrEqual(50);
-    // Two cells with their own lines settle in sequence: a2 settles after the a1 line.
-    expect(at(w, 'a2', 'settled')).toBeGreaterThan(w.lines[5].at);
+    // Two cells with their own lines settle in sequence: a4 settles after the a1 line.
+    expect(at(w, 'a4', 'settled')).toBeGreaterThan(w.lines[5].at);
 
     // 5 · the coda follows the last cell and nothing lands after the run ends.
-    expect(w.lines[7].at).toBeGreaterThan(at(w, 'a2', 'settled'));
+    expect(w.lines[7].at).toBeGreaterThan(at(w, 'a4', 'settled'));
     expect(w.lines[7].cls).toBe('l');
     expect(w.lines[6].cls).toBe('l warn');
+    expect(w.lines[4].cls).toBe('l sig');
+    expect(w.lines[1].cls).toBe('l sig');
     await expect(entry.locator('.l')).toHaveCount(8);
   });
 
@@ -161,12 +170,12 @@ test.describe('log line in sync with the settle', () => {
     test.setTimeout(60_000);
     await page.goto('/');
     await page.locator('.level').first().waitFor();
-    await page.getByRole('button', { name: 'shipped the agent-facing giving API' }).click();
+    await startFlowA(page);
     const p2 = page.locator('.card[data-id="p2"]');
     await expect(p2).toHaveClass(/proposed/, { timeout: 20_000 });
     await page.keyboard.press('Escape');
     await expect(page.locator('#job')).toBeHidden({ timeout: 1_000 });
-    await expect(page.locator('#log .entry').first().locator('.l.warn').last()).toHaveText('stopped after 3/6 cells');
+    await expect(page.locator('#log .entry').first().locator('.l.warn').last()).toHaveText('Stopped after 3 of 6 cells.');
     // Regression: only the last pause in flight was woken, so the other cell's settle ran on
     // after the stop and re-rendered the stack ~900ms later.
     const mutations = await page.evaluate(() => {

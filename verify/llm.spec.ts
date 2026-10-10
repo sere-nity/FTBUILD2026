@@ -3,7 +3,7 @@
 // scripted flow to the same end state. With the flag off, /api is never called.
 import { test, expect, type Page } from '@playwright/test';
 
-const FLOW_A = 'shipped the agent-facing giving API';
+const FLOW_A = 'shipped AI DJ v2';
 
 async function shot(page: Page, flow: string, name: string, info: { project: { name: string } }) {
   await page.screenshot({ path: `verify/shots/${flow}/${name}.${info.project.name}.png`, fullPage: false });
@@ -25,24 +25,30 @@ test.describe('llm runner', () => {
     // Simulate WAYPOINT_LLM=1 by answering /api/plan the way a dead proxy would (connection refused).
     await page.route('**/api/plan', (route) => route.abort('connectionrefused'));
     await page.goto('/');
-    await page.evaluate(() => {
+    await page.evaluate((text) => {
       const w = window as unknown as { __waypoint: { runLLM?: (t: string, i: string) => Promise<void> } };
-      void w.__waypoint.runLLM!('shipped the agent-facing giving API', 'milestone');
-    });
+      void w.__waypoint.runLLM!(text, 'milestone');
+    }, FLOW_A);
     // Sizing starts at once: levels dim while the call is in flight.
     await expect(page.locator('#job')).toBeVisible();
-    await expect(page.locator('#jobtitle')).toHaveText('Sizing change…');
+    await expect(page.locator('#jobtitle')).toHaveText('Sizing the change…');
     await shot(page, 'llm', '01-sizing-while-calling', info);
 
-    const warn = page.locator('#log .entry').first().locator('.l.warn').first();
-    await expect(warn).toContainText('llm runner unavailable', { timeout: 10000 });
-    await expect(warn).toContainText('using the scripted runner');
+    // One entry carries the whole run: the "you shipped" header, the fallback line, then the scripted lines.
+    const entry = page.locator('#log .entry').first();
+    await expect(entry.locator('.eh .kind')).toHaveText('you shipped');
+    await expect(entry.locator('.eh b')).toHaveText(FLOW_A);
+    const warn = entry.locator('.l.warn').first();
+    await expect(warn).toHaveText('The model is unavailable (proxy not reachable). Using the scripted runner instead.', { timeout: 10000 });
     await shot(page, 'llm', '02-fallback-line', info);
 
     // The scripted Flow A then runs to its end state.
     const i1 = page.locator('.card[data-id="i1"]');
-    await expect(i1).toContainText('70', { timeout: 30000 });
+    await expect(i1).toContainText('100%', { timeout: 30000 });
     await expect(page.locator('#job')).toBeHidden({ timeout: 30000 });
+    await expect(i1.locator('.fields .v').first()).toHaveText(/^100%\s*↑$/);
+    await expect(page.locator('#log .entry')).toHaveCount(2); // the run's entry and the Jul baseline
+    await expect(entry.locator('.l').last()).toHaveText('World: no scenario moved.');
     await shot(page, 'llm', '03-scripted-end-state', info);
   });
 });

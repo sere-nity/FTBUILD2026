@@ -15,24 +15,37 @@ declare global {
   }
 }
 
-const CELLS = ['c1', 'p1', 'p2', 'i1', 'a1', 'a2'] as const;
+// Flow A touches six cells, in this order: c1, then p2 and p1 (settle together), i1, a1, a4.
+const CELLS = ['c1', 'p2', 'p1', 'i1', 'a1', 'a4'] as const;
+const STATUS: Record<string, string> = {
+  c1: 'Reading the milestone',
+  p2: 'Checking which flows changed',
+  p1: 'Checking which flows changed',
+  i1: 'Recomputing % shipped',
+  a1: 'Recomputing what rides on this',
+  a4: 'Recomputing what rides on this',
+};
 const NOTE: Record<string, string> = {
-  c1: 'api/giving/* · 14 files',
-  p1: 'which flows does this change?',
-  p2: 'which flows does this change?',
-  i1: 'recomputing shipped % from milestone',
-  a1: 'recomputing exposure from initiatives that rest on this',
-  a2: 'recomputing exposure from initiatives that rest on this',
+  c1: 'dj/* · 31 files · 5 commits',
+  p2: 'screenshots of AI DJ',
+  p1: 'screenshots of Home',
+  i1: 'from the milestone',
+  a1: 'a bet that depends on it just fully shipped',
+  a4: 'a bet that depends on it just fully shipped',
 };
 // Old value ghosted beside the new one while proposed. Code/product cards change only text, so no ghost.
 const GHOST: Record<string, [string, string]> = {
   c1: ['', ''],
-  p1: ['', ''],
   p2: ['', ''],
-  i1: ['20%', '70%'],
-  a1: ['1 initiative', '2 initiatives'],
-  a2: ['0 initiatives', '1 initiative'],
+  p1: ['', ''],
+  i1: ['60%', '100%'],
+  a1: ['1 bet', '2 bets'],
+  a4: ['2 bets', '3 bets'],
 };
+const GHOSTED = ['i1', 'a1', 'a4'];
+
+/** The primary "Try" hint submits Flow A. (`#go` in the intro carries the same text, so scope to the bar.) */
+const startFlowA = (page: Page) => page.locator('#hints .hint').filter({ hasText: 'shipped AI DJ v2' }).click();
 
 // Centre the card so it is not under the sticky top bar or the floating prompt bar.
 const centre = (l: ReturnType<Page['locator']>) => l.evaluate((el) => el.scrollIntoView({ block: 'center' }));
@@ -105,13 +118,13 @@ test.describe('cell state machine', () => {
   test('preparing → proposed → settled for every touched cell, with note, ghost, arrow and accent', async ({ page }, testInfo) => {
     test.setTimeout(90_000);
     await watch(page);
-    await page.getByRole('button', { name: 'shipped the agent-facing giving API' }).click();
+    await startFlowA(page);
 
-    // 1 · preparing: thin spinner, status word and a per-cell note on the card itself.
+    // 1 · preparing: thin spinner, status sentence and a per-cell note on the card itself.
     const c1 = page.locator('.card[data-id="c1"]');
     await expect(c1).toHaveClass(/preparing/, { timeout: 10_000 });
     await expect(c1.locator('.status .spin')).toBeVisible();
-    await expect(c1.locator('.status')).toContainText('Reading…');
+    await expect(c1.locator('.status')).toContainText(STATUS.c1);
     await expect(c1.locator('.status .note')).toHaveText(NOTE.c1);
     await expect(c1).not.toHaveClass(/changed|proposed/);
     await centre(c1);
@@ -122,10 +135,10 @@ test.describe('cell state machine', () => {
     await expect(i1).toHaveClass(/proposed/, { timeout: 20_000 });
     await centre(i1);
     const shipped = i1.locator('.fields .v').first();
-    await expect(shipped.locator('.ghost')).toHaveText('20%');
-    await expect(shipped).toContainText('70%');
+    await expect(shipped.locator('.ghost')).toHaveText('60%');
+    await expect(shipped).toContainText('100%');
     await expect(i1.locator('.status .spin')).toHaveCount(0);
-    await expect(i1.locator('.status')).toContainText('20% → 70%');
+    await expect(i1.locator('.status')).toContainText('60% → 100%');
     const idleCard = page.locator('.card[data-id="i2"]');
     const [accent, plain] = await Promise.all([
       i1.evaluate((el) => ({ border: getComputedStyle(el).borderColor, shadow: getComputedStyle(el).boxShadow })),
@@ -136,12 +149,13 @@ test.describe('cell state machine', () => {
     expect(plain.shadow).toBe('none');
     await shot(page, testInfo.project.name, '02-proposed');
 
-    // 3 · settled: ghost gone, ↑ stays on the field that moved, accent rule kept.
+    // 3 · settled: ghost gone, ↑ stays on the field that moved, accent rule kept, bar full.
     await expect(i1).not.toHaveClass(/proposed/, { timeout: 5_000 });
     await expect(i1).toHaveClass(/changed/);
     await expect(shipped.locator('.ghost')).toHaveCount(0);
     await expect(shipped.locator('.arrow')).toHaveText('↑');
-    await expect(shipped).toHaveText(/^70%\s*↑$/);
+    await expect(shipped).toHaveText(/^100%\s*↑$/);
+    await expect(i1.locator('.pct i')).toHaveAttribute('style', /width:\s*100%/);
     const settled = await i1.evaluate((el) => ({ border: getComputedStyle(el).borderColor, shadow: getComputedStyle(el).boxShadow }));
     expect(settled.border).toBe(accent.border);
     expect(settled.shadow).toBe(accent.shadow);
@@ -152,15 +166,19 @@ test.describe('cell state machine', () => {
 
     // After the run: six changed in state; Product and Code have collapsed, so three cards
     // carry the accent on screen and the other three show as "N changed" on their level line.
-    expect(await changedIds(page)).toEqual(['a1', 'a2', 'c1', 'i1', 'p1', 'p2']);
+    expect(await changedIds(page)).toEqual(['a1', 'a4', 'c1', 'i1', 'p1', 'p2']);
     await expect(page.locator('.card.changed')).toHaveCount(3);
     await expect(page.locator('.level[data-level="product"] .count')).toHaveText('2 changed');
     await expect(page.locator('.level[data-level="code"] .count')).toHaveText('1 changed');
-    await expect(page.locator('.card[data-id="a1"] .fields .v').nth(2)).toHaveText(/^2 initiatives\s*↑$/);
-    await expect(page.locator('.card[data-id="a2"] .fields .v').nth(2)).toHaveText(/^1 initiative\s*↑$/);
+    await expect(page.locator('.level[data-level="assumptions"] .count')).toHaveText('2 changed');
+    await expect(page.locator('.level[data-level="initiatives"] .count')).toHaveText('1 changed');
+    await expect(page.locator('.level[data-level="world"] .count')).toHaveText('');
+    await expect(page.locator('.card[data-id="a1"] .fields .v').nth(2)).toHaveText(/^2 bets\s*↑$/);
+    await expect(page.locator('.card[data-id="a4"] .fields .v').nth(2)).toHaveText(/^3 bets\s*↑$/);
+    await expect(page.locator('.card[data-id="a2"] .fields .v').nth(2)).toHaveText('1 bet'); // a2 is not touched in this build
     await expect(page.locator('.card[data-id="a1"] .arrow')).toHaveCount(1);
-    await expect(page.locator('.card[data-id="a2"] .arrow')).toHaveCount(1);
-    await expect(page.locator('.card .arrow')).toHaveCount(3); // i1, a1, a2
+    await expect(page.locator('.card[data-id="a4"] .arrow')).toHaveCount(1);
+    await expect(page.locator('.card .arrow')).toHaveCount(3); // i1, a1, a4
     await centre(page.locator('.card[data-id="a1"]'));
     await shot(page, testInfo.project.name, '04-after');
 
@@ -172,7 +190,7 @@ test.describe('cell state machine', () => {
       expect(ev.map((e) => e.phase), id).toEqual(['preparing', 'proposed', 'settled']);
       const [prep, prop, set] = ev;
       expect(prep.spin, `${id} preparing has a spinner`).toBe(true);
-      expect(['Reading…', 'Preparing…']).toContain(prep.status);
+      expect(prep.status, `${id} status`).toBe(STATUS[id]);
       expect(prep.note, `${id} note`).toBe(NOTE[id]);
       expect(prop.spin, `${id} proposed has no spinner`).toBe(false);
       expect(prop.ghost, `${id} ghost`).toBe(GHOST[id][0]);
@@ -183,14 +201,17 @@ test.describe('cell state machine', () => {
       expect(held, `${id} proposed for ${Math.round(held)}ms`).toBeLessThanOrEqual(1400);
       expect(set.ghost, `${id} settled has no ghost`).toBe('');
     }
-    // Nothing is marked outside the run order: code before product before initiatives before assumptions.
+    // Nothing is marked outside the run order: code before product before bets before beliefs,
+    // and within a level the first cell starts preparing before the second.
     const firstPrep = CELLS.map((id) => w.events.find((e) => e.id === id && e.phase === 'preparing')!.at);
-    expect(firstPrep[0]).toBeLessThan(firstPrep[1]);
-    expect(firstPrep[2]).toBeLessThan(firstPrep[3]);
-    expect(firstPrep[3]).toBeLessThan(firstPrep[4]);
+    expect(firstPrep[0], 'c1 before p2').toBeLessThan(firstPrep[1]);
+    expect(firstPrep[1], 'p2 before p1').toBeLessThan(firstPrep[2]);
+    expect(firstPrep[2], 'p1 before i1').toBeLessThan(firstPrep[3]);
+    expect(firstPrep[3], 'i1 before a1').toBeLessThan(firstPrep[4]);
+    expect(firstPrep[4], 'a1 before a4').toBeLessThan(firstPrep[5]);
 
     // 5 · the ghost fades (200–400ms) rather than vanishing: opacity 1, then a slope, then gone.
-    for (const id of ['i1', 'a1', 'a2']) {
+    for (const id of GHOSTED) {
       const frames = w.ghost[id];
       expect(frames.length, `${id} ghost frames`).toBeGreaterThan(10);
       expect(frames[0].op).toBe(1);
@@ -209,7 +230,7 @@ test.describe('cell state machine', () => {
 
   test('Esc mid-run: settled cells keep their values, the cell in flight is cleaned up, log says how far', async ({ page }, testInfo) => {
     test.setTimeout(60_000);
-    await page.getByRole('button', { name: 'shipped the agent-facing giving API' }).click();
+    await startFlowA(page);
     const i1 = page.locator('.card[data-id="i1"]');
     await expect(i1).toHaveClass(/preparing/, { timeout: 20_000 });
     const t0 = Date.now();
@@ -218,19 +239,21 @@ test.describe('cell state machine', () => {
     // until the run ended on its own.
     await expect(page.locator('#job')).toBeHidden({ timeout: 1_000 });
     expect(Date.now() - t0).toBeLessThan(300);
-    await expect(page.locator('#log .entry').first().locator('.l.warn').last()).toHaveText('stopped after 3/6 cells');
+    await expect(page.locator('#log .entry').first().locator('.l.warn').last()).toHaveText('Stopped after 3 of 6 cells.');
     await noTransient(page);
     // What settled stays; what was in flight is untouched.
     expect(await changedIds(page)).toEqual(['c1', 'p1', 'p2']);
     await expect(i1).not.toHaveClass(/changed/);
     await expect(page.locator('.card.changed')).toHaveCount(0); // the three are on collapsed levels
-    await expect(i1.locator('.fields .v').first()).toHaveText('20%');
+    await expect(i1.locator('.fields .v').first()).toHaveText('60%');
+    await expect(i1.locator('.pct i')).toHaveAttribute('style', /width:\s*60%/);
     await expect(page.locator('.card .arrow')).toHaveCount(0);
     // Quiet levels collapse as they do when a run ends; the touched level stays open.
     await expect(page.locator('.level[data-level="product"] .compact')).toBeVisible();
     await expect(page.locator('.level[data-level="code"] .compact')).toBeVisible();
     await expect(page.locator('.level[data-level="product"] .count')).toHaveText('2 changed');
     await expect(page.locator('.level[data-level="code"] .count')).toHaveText('1 changed');
+    await expect(page.locator('.level[data-level="code"] .compact b').first()).toHaveText('Milestone: AI DJ v2');
     await centre(i1);
     await shot(page, testInfo.project.name, '05-stopped-mid-run');
     // The run is over: nothing settles later.
@@ -242,19 +265,19 @@ test.describe('cell state machine', () => {
 
   test('Stop while a value is proposed keeps it (applied immediately) and drops the ghost', async ({ page }) => {
     test.setTimeout(60_000);
-    await page.getByRole('button', { name: 'shipped the agent-facing giving API' }).click();
+    await startFlowA(page);
     const i1 = page.locator('.card[data-id="i1"]');
     await expect(i1).toHaveClass(/proposed/, { timeout: 20_000 });
     await page.locator('#stop').click();
     await expect(page.locator('#job')).toBeHidden({ timeout: 1_000 });
-    await expect(page.locator('#log .entry').first().locator('.l.warn').last()).toHaveText('stopped after 4/6 cells');
+    await expect(page.locator('#log .entry').first().locator('.l.warn').last()).toHaveText('Stopped after 4 of 6 cells.');
     await noTransient(page);
     await expect(i1).toHaveClass(/changed/);
-    await expect(i1.locator('.fields .v').first()).toHaveText(/^70%\s*↑$/);
+    await expect(i1.locator('.fields .v').first()).toHaveText(/^100%\s*↑$/);
     expect(await changedIds(page)).toEqual(['c1', 'i1', 'p1', 'p2']);
     await expect(page.locator('.card.changed')).toHaveCount(1); // i1; the others sit on collapsed levels
     const pct = await page.evaluate(() => window.__waypoint.store.state.cards.find((c) => c.id === 'i1')!.pct);
-    expect(pct).toBe(70);
+    expect(pct).toBe(100);
   });
 });
 
@@ -266,7 +289,7 @@ test.describe('cell state machine · reduced motion', () => {
     await page.goto('/');
     await page.locator('.level').first().waitFor();
     await watch(page);
-    await page.getByRole('button', { name: 'shipped the agent-facing giving API' }).click();
+    await startFlowA(page);
     await expect(page.locator('#job')).toBeVisible();
     await expect(page.locator('#job')).toBeHidden({ timeout: 40_000 });
     const w = await page.evaluate(() => window.__cells);
@@ -274,7 +297,7 @@ test.describe('cell state machine · reduced motion', () => {
       const ev = w.events.filter((e) => e.id === id && e.phase !== 'idle');
       expect(ev.map((e) => e.phase), id).toEqual(['preparing', 'proposed', 'settled']);
     }
-    for (const id of ['i1', 'a1', 'a2']) {
+    for (const id of GHOSTED) {
       const frames = w.ghost[id];
       // Every recorded frame is fully opaque or fully transparent: no slope.
       expect(frames.every((f) => f.op === 1 || f.op === 0), `${id} ghost opacities ${[...new Set(frames.map((f) => f.op))]}`).toBe(true);
