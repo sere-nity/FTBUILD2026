@@ -5,11 +5,12 @@
 // and says so in the log, so the demo never depends on the network.
 import { store, byId, SRC, type Card, type Level, type Direction } from '../state';
 import { render } from '../render';
-import { logEntry, logLine, cite, type LineClass } from '../log';
+import { logEntry, logLine, cite, esc, type LineClass } from '../log';
 import type { Intent } from '../bar';
 import { TIMING } from './timing';
 import {
-  startSizing, holdPlan, prepare, settle, touchLevel, clearTrends, finish, running, runMilestone, wait,
+  startSizing, holdPlan, prepare, settle, setActive, clearTrends, finish, running, hideIntro,
+  runMilestone, runWorld, wait,
   type Plan,
 } from './scripted';
 
@@ -43,6 +44,8 @@ export type LLMPlan = {
 
 const PLAN_TIMEOUT = 30_000;
 
+const KIND: Record<string, string> = { milestone: 'you shipped', world: 'the world moved', unmatched: 'you said', inspect: 'inspect', ask: 'you asked' };
+
 /** Ask the proxy for a plan. Throws with a one-line reason on any failure. */
 async function fetchPlan(text: string, intent: Intent): Promise<LLMPlan> {
   const ctrl = new AbortController();
@@ -66,12 +69,12 @@ async function fetchPlan(text: string, intent: Intent): Promise<LLMPlan> {
   }
 }
 
-/** The fallback: say why, then run the scripted flow for the same intent. */
+/** The fallback: say why, then run the scripted flow for the same intent in the same entry. */
 async function fallback(e: HTMLElement, text: string, intent: Intent, reason: string): Promise<void> {
   finish();
-  await logLine(e, `llm runner unavailable (${reason}) · using the scripted runner`, 'warn');
-  if (intent === 'milestone') return runMilestone(text, e);
-  await logLine(e, 'the scripted runner has no flow for this input yet', '', 0);
+  await logLine(e, `The model is unavailable (${reason}). Using the scripted runner instead.`, 'warn');
+  if (intent === 'world') return runWorld(e);
+  return runMilestone(text, e);
 }
 
 /** Apply a checked mutation to a card. `us` never appears here; the proxy already dropped it. */
@@ -84,14 +87,11 @@ function apply(c: Card, m: Mutation): void {
   if (m.chip != null) c.chip = m.chip as Card['chip'];
   if (m.kind != null) c.kind = m.kind;
   if (m.triggerHit != null) c.triggerHit = m.triggerHit;
-  if (m.f != null) c.f = m.f;
+  if (m.f != null) { c.f = m.f; c.trend = '↑'; c.trendOn = 'f'; }
   if (m.hist) c.hist.push(m.hist);
 }
 
-const esc = (s: string): string =>
-  s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-
-const withCite = (line: string, source: string | null): string => esc(line) + (source ? ' ' + cite(source) : '');
+const withCite = (line: string, source: string | null): string => esc(line) + (source ? cite(source) : '');
 
 /**
  * Run one event through the model. Sizing starts at once (levels dim) while the call is in
@@ -99,8 +99,9 @@ const withCite = (line: string, source: string | null): string => esc(line) + (s
  */
 export async function runLLM(text: string, intent: Intent): Promise<void> {
   if (store.job) return;
-  const e = logEntry(intent, text);
-  await logLine(e, 'sizing…');
+  hideIntro();
+  const e = logEntry(KIND[intent] ?? intent, text);
+  await logLine(e, 'Sizing the change…');
   const placeholder: Plan = { kind: intent, dir: intent === 'world' ? 'down' : 'up', levels: [], touches: '' };
   startSizing(placeholder);
 
@@ -110,21 +111,16 @@ export async function runLLM(text: string, intent: Intent): Promise<void> {
   } catch (err) {
     return fallback(e, text, intent, (err as Error).message);
   }
-  if (store.abort) {
+  const stoppedEarly = async (): Promise<void> => {
     finish();
-    return logLine(e, 'stopped before running', 'warn', 0);
-  }
+    await logLine(e, 'Stopped before anything changed.', 'warn', 0);
+  };
+  if (store.abort) return stoppedEarly();
   // Let the dim read as a scan even when the model answers fast.
-  if (await wait(Math.max(0, TIMING.scanning - 400))) {
-    finish();
-    return logLine(e, 'stopped before running', 'warn', 0);
-  }
+  if (await wait(Math.max(0, TIMING.scanning - 400))) return stoppedEarly();
 
   const ok = await holdPlan({ kind: intent, dir: plan.dir, levels: plan.levels, touches: plan.touches });
-  if (!ok) {
-    finish();
-    return logLine(e, 'stopped before running', 'warn', 0);
-  }
+  if (!ok) return stoppedEarly();
 
   clearTrends();
   store.job!.phase = 'running';
@@ -139,7 +135,7 @@ export async function runLLM(text: string, intent: Intent): Promise<void> {
       if (!card) continue;
       if (card.level !== level) {
         level = card.level;
-        touchLevel(level);
+        setActive(level);
       }
       await prepare(cell.id, cell.status || 'Preparing…', cell.note || '');
       await settle(cell.id, (c) => apply(c, cell.mutation), cell.why || 'changed');

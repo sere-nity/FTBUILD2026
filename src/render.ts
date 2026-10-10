@@ -1,19 +1,11 @@
 // One render(state) function. The DOM is a function of the store, same as the reference.
 import {
-  LEVELS, SRC, ANALOGUES, store, visible, byId, dots, chipFor, entryLevel,
+  LEVELS, SRC, ANALOGUES, CHIP_HELP, store, visible, byId, dots, plural, chipFor, entryLevel,
   type Card, type State, type Job,
 } from './state';
+import { esc } from './log';
 
 const $ = <T extends Element = HTMLElement>(s: string): T => document.querySelector<T>(s)!;
-
-const esc = (s: string): string =>
-  s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-
-function countLabel(levelId: string, n: number): string {
-  if (levelId === 'world') return `${n} scenarios`;
-  if (levelId === 'code') return `${n} milestone`;
-  return `${n} cards`;
-}
 
 export function render(): void {
   const s = visible();
@@ -26,49 +18,61 @@ export function render(): void {
     const el = document.createElement('section');
     el.className = 'level';
     el.dataset.level = L.id;
+    if (store.activeLevel === L.id) el.classList.add('active');
+    if (store.touched.has(L.id)) el.classList.add('touched');
     const exp = s.expanded[L.id];
     el.innerHTML =
-      `<div class="level-head"><h3>${L.name}</h3>` +
-      `<span class="count ${nChanged ? 'changed' : ''}">${nChanged ? nChanged + ' changed' : countLabel(L.id, cards.length)}</span>` +
-      `<span class="entry" data-entry></span></div>`;
+      `<div class="rail"><span class="dot"></span><span class="arrow">${store.runDir === 'up' ? '▲' : '▼'}</span></div>` +
+      `<div class="body"><div class="level-head"><h3>${L.name}</h3><span class="sub">${esc(L.sub)}</span>` +
+      `<span class="count ${nChanged ? 'changed' : ''}">${nChanged ? nChanged + ' changed' : ''}</span>` +
+      `<span class="entry" data-entry></span></div></div>`;
+    const body = el.querySelector('.body')!;
     if (exp) {
       const grid = document.createElement('div');
       grid.className = 'cards';
       for (const c of cards) grid.appendChild(renderCard(c, s, base));
-      el.appendChild(grid);
+      body.appendChild(grid);
     } else {
       const line = document.createElement('div');
       line.className = 'compact';
       line.innerHTML =
-        cards.map((c) => `<b>${esc(c.title)}</b>${c.note ? ' · ' + esc(c.note) : ''}`).join(' &nbsp;·&nbsp; ') +
-        `<button data-expand="${L.id}">expand</button>`;
-      el.appendChild(line);
+        cards.map((c) => `<span><b>${esc(c.title)}</b>${c.note ? ` <span class="n">· ${esc(c.note)}</span>` : ''}</span>`).join('') +
+        `<button type="button" data-expand="${L.id}">show</button>`;
+      body.appendChild(line);
     }
     stack.appendChild(el);
   }
   renderSnaps();
   renderJob(store.job);
   $('#cmp').classList.toggle('on', store.compare);
+  const intro = document.querySelector<HTMLElement>('#intro');
+  if (intro) intro.hidden = store.introHidden;
   const ro = $('#ro');
   ro.hidden = store.viewing === null;
   if (store.viewing !== null) {
-    ro.textContent = `Viewing snapshot “${store.snapshots[store.viewing].name}” · read-only · click “now” to return`;
+    ro.textContent = `Viewing the “${store.snapshots[store.viewing].name}” snapshot, read-only. Click “now” to come back.`;
   }
+  const form = document.querySelector<HTMLFormElement>('#form');
+  if (form) form.classList.toggle('off', store.job !== null || store.viewing !== null);
 }
 
-const plural = (n: number, w: string): string => `${n} ${w}${n === 1 ? '' : 's'}`;
+/** The direction of a run, in words. */
+export const dirText = (dir: Job['dir']): string => (dir === 'up' ? 'moving up from Code' : 'moving down from World');
 
 /** What the job header says in each phase (SPEC §6). */
 export function jobText(j: Job): { title: string; meta: string; pct: number } {
-  const dir = j.dir === 'up' ? 'bottom-up' : 'top-down';
   const reach = `Reaches ${plural(j.levels.length, 'level')}`;
-  if (j.phase === 'sizing') return { title: 'Sizing change…', meta: 'scanning all levels', pct: 5 };
+  if (j.phase === 'sizing') return { title: 'Sizing the change…', meta: 'How far does this reach? Looking at every level.', pct: 5 };
   if (j.phase === 'intervene') {
     // Two flex children: at phone width the warning wraps to its own line with no stray separator.
-    return { title: `${reach} · ${dir}`, meta: `<span>touches: ${esc(j.touches)}</span><span class="warn">2s to intervene</span>`, pct: 12 };
+    return {
+      title: `${reach} · ${dirText(j.dir)}`,
+      meta: `<span>Will touch: ${esc(j.touches)}.</span><em>Type “stop” or press Esc in the next 2 seconds to cancel.</em>`,
+      pct: 12,
+    };
   }
   const frac = j.total ? j.done / j.total : 0;
-  return { title: `${reach} · ${j.done}/${j.total} cells done`, meta: `${dir} · ${esc(j.kind)}`, pct: 12 + frac * 88 };
+  return { title: `${reach} · ${j.done}/${j.total} cells done`, meta: dirText(j.dir), pct: 12 + frac * 88 };
 }
 
 /**
@@ -96,7 +100,7 @@ function renderJob(j: Job | null): void {
   } else {
     for (const el of levels) el.classList.remove('scanning');
     const entry = document.querySelector(`.level[data-level="${entryLevel(j.dir)}"] [data-entry]`);
-    if (entry) entry.textContent = '◀ entered here';
+    if (entry) entry.textContent = 'starts here';
   }
 }
 
@@ -121,42 +125,38 @@ export function renderCard(c: Card, s: State, base: State): HTMLElement {
     if (JSON.stringify(ghostFrom[key]) === JSON.stringify(c[key])) return cur;
     return `<span class="ghost">${fmt(ghostFrom[key] as NonNullable<Card[K]>)}</span>${cur}`;
   };
-  const trend = c.trend ? `<span class="arrow ${c.trend === '↓' ? 'down' : ''}">${c.trend}</span>` : '';
+  const arrow = c.trend ? `<span class="arrow ${c.trend === '↓' ? 'down' : ''}">${c.trend}</span>` : '';
+  const tr = (on: string): string => (c.trend && c.trendOn === on ? arrow : '');
 
   // One chip path for every level; chipFor() drops anything outside SPEC §3's enums.
   const word = chipFor(c, s);
-  const chip = word ? `<span class="chip ${word}">${word}</span>` : '';
+  const chip = word ? `<span class="chip ${word}" title="${esc(CHIP_HELP[word] ?? '')}">${word}</span>` : '';
   let fields = '';
+  let extra = '';
   if (c.level === 'world') {
     fields =
-      `<span class="k">axes</span><span class="v wrap">${esc(c.sub ?? '')}</span>` +
-      `<span class="k">signposts</span><span class="v">${diff('f', (v) => v.signposts)}${trend}</span>` +
-      `<span class="k">last moved</span><span class="v">${c.f?.lastMoved ?? ''}</span>`;
+      `<span class="k">if true</span><span class="v t">${esc(c.sub ?? '')}</span>` +
+      `<span class="k">signposts</span><span class="v">${diff('f', (v) => v.signposts)}${arrow}</span>` +
+      `<span class="k">last moved</span><span class="v">${esc(c.f?.lastMoved ?? '')}</span>`;
   } else if (c.level === 'assumptions') {
     const ev = c.ev ?? 0;
     const us = c.us ?? 0;
-    const gap = Math.abs(ev - us) >= 2 ? ` <span class="flag" title="evidence and belief disagree">⚠</span>` : '';
+    const gap = Math.abs(ev - us) >= 2 ? ` <span class="flag" title="We believe this more than the evidence supports">⚠</span>` : '';
     fields =
-      `<span class="k">evidence</span><span class="v dots">${diff('ev', dots)}${c.trend && c.trendOn === 'ev' ? trend : ''}</span>` +
-      `<span class="k">belief</span><span class="v dots">${diff('us', dots)}${gap}</span>` +
-      `<span class="k">exposure</span><span class="v">${diff('exposure', (v) => v + ' initiative' + (v === 1 ? '' : 's'))}${c.trendOn === 'exposure' ? trend : ''}</span>`;
+      `<span class="k">evidence</span><span class="v dots">${diff('ev', dots)}${tr('ev')}</span>` +
+      `<span class="k">our belief</span><span class="v dots">${diff('us', dots)}${gap}</span>` +
+      `<span class="k">riding on it</span><span class="v">${diff('exposure', (v) => plural(v, 'bet'))}${tr('exposure')}</span>`;
   } else if (c.level === 'initiatives') {
-    const restIds = c.rests ?? [];
-    const rests = restIds
-      .map((id) => {
-        const a = byId(id) || { title: id };
-        return esc(a.title.split(' ').slice(0, 3).join(' ')) + '…';
-      })
-      .join(', ');
-    const restsFull = esc(restIds.map((id) => (byId(id) || { title: id }).title).join(' · '));
+    const rests = esc((c.rests ?? []).map((id) => (byId(id) || { title: id }).title).join(' · '));
     fields =
-      `<span class="k">shipped</span><span class="v">${diff('pct', (v) => v + '%')}${c.trendOn === 'pct' ? trend : ''}</span>` +
-      `<span class="k">rests on</span><span class="v" title="${restsFull}">${rests}</span>` +
+      `<span class="k">shipped</span><span class="v">${diff('pct', (v) => v + '%')}${tr('pct')}</span>` +
+      `<span class="k">depends on</span><span class="v t" title="${rests}">${rests}</span>` +
       (c.trigger
-        ? `<span class="k">trigger</span><span class="v" title="${esc(c.trigger)}">${c.triggerHit ? '<span class="flag">⚑ hit · </span>' : ''}${esc(c.trigger)}</span>`
+        ? `<span class="k">trigger</span><span class="v t" title="${esc(c.trigger)}">${c.triggerHit ? '<span class="flag">⚑ fired · </span>' : ''}${esc(c.trigger)}</span>`
         : '');
+    extra = `<div class="pct"><i style="width:${c.pct ?? 0}%"></i></div>`;
   } else {
-    fields = `<span class="k">${c.level === 'code' ? 'files' : 'note'}</span><span class="v" title="${esc(c.note ?? '')}">${esc(c.note ?? '')}</span>`;
+    fields = `<span class="k">${c.level === 'code' ? 'files' : 'what'}</span><span class="v t" title="${esc(c.note ?? '')}">${esc(c.note ?? '')}</span>`;
   }
 
   const statusHtml = c._status
@@ -167,6 +167,7 @@ export function renderCard(c: Card, s: State, base: State): HTMLElement {
 
   el.innerHTML =
     `<div class="card-head"><h4>${esc(c.title)}</h4>${chip}</div>` +
+    extra +
     `<div class="fields">${fields}</div>` +
     `<div class="status">${statusHtml}</div>`;
   if (store.open[c.id]) el.appendChild(renderDetail(c));
@@ -184,37 +185,37 @@ export function renderDetail(c: Card): HTMLElement {
       return `<li>${x.u ? `<a href="${x.u}" target="_blank" rel="noopener">${esc(x.t)}</a>` : esc(x.t)}</li>`;
     })
     .join('');
-  let html = `<div><h5>Evidence (${sources.length})</h5>${src ? `<ul>${src}</ul>` : '<div class="none">⊘ no evidence attached</div>'}</div>`;
+  let html = `<div><h5>Evidence (${sources.length})</h5>${src ? `<ul>${src}</ul>` : "<div class=\"none\">none attached. The bar can't move until there is some.</div>"}</div>`;
   if (c.signposts) {
-    html += `<div><h5>Signposts</h5><ul>${c.signposts.map((s) => `<li>${esc(s)}</li>`).join('')}</ul></div>`;
+    html += `<div><h5>Signposts we set in July</h5><ul>${c.signposts.map((s) => `<li>${esc(s)}</li>`).join('')}</ul></div>`;
   }
   if (c.level === 'assumptions') {
     const deps = store.state.cards.filter((i) => i.rests && i.rests.includes(c.id));
-    html += `<div><h5>Initiatives resting on this</h5>${
+    html += `<div><h5>Bets riding on this</h5>${
       deps.length
-        ? `<ul>${deps.map((i) => `<li>${esc(i.title)} · ${i.pct}%</li>`).join('')}</ul>`
-        : '<div class="none">none · this bet is floating free of any action</div>'
+        ? `<ul>${deps.map((i) => `<li>${esc(i.title)} · ${i.pct}% shipped</li>`).join('')}</ul>`
+        : "<div class=\"none\">none. You believe this but nothing you're building depends on it.</div>"
     }</div>`;
   }
   if (c.rests) {
-    html += `<div><h5>Rests on</h5><ul>${c.rests
+    html += `<div><h5>Depends on</h5><ul>${c.rests
       .map((id) => {
         const a = byId(id);
-        return `<li>${a ? esc(a.title) + ' · ev <span class="dots">' + dots(a.ev ?? 0) + '</span>' : esc(id)}</li>`;
+        return `<li>${a ? esc(a.title) + ' · evidence <span class="dots">' + dots(a.ev ?? 0) + '</span>' : esc(id)}</li>`;
       })
       .join('')}</ul></div>`;
   }
   if (c.analogue && ANALOGUES[c.analogue]) {
     const a = ANALOGUES[c.analogue];
     html +=
-      `<div><h5>Prior strategy</h5><div class="analogue"><span class="t">${esc(a.t)}</span>` +
-      `<span class="k">commoditised</span><span>${esc(a.what)}</span>` +
+      `<div><h5>What happened last time</h5><div class="analogue"><span class="t">${esc(a.t)}</span>` +
+      `<span class="k">got cheap</span><span>${esc(a.what)}</span>` +
       `<span class="k">value moved to</span><span>${esc(a.where)}</span>` +
-      `<span class="k">survivor tracked</span><span>${esc(a.tracked)}</span>` +
+      `<span class="k">survivor watched</span><span>${esc(a.tracked)}</span>` +
       `<span class="k">loser believed</span><span>${esc(a.believed)}</span></div></div>`;
   }
   html += `<div><h5>History</h5>${
-    c.hist.length ? `<ul class="hist">${c.hist.map((h) => `<li>${esc(h)}</li>`).join('')}</ul>` : '<div class="none">no changes recorded</div>'
+    c.hist.length ? `<ul class="hist">${c.hist.map((h) => `<li>${esc(h)}</li>`).join('')}</ul>` : '<div class="none">no changes yet</div>'
   }</div>`;
   d.innerHTML = html;
   return d;
@@ -225,12 +226,14 @@ export function renderSnaps(): void {
   w.innerHTML = '<span class="lbl">snapshots</span>';
   store.snapshots.forEach((s, i) => {
     const b = document.createElement('button');
+    b.type = 'button';
     b.className = 'snap' + (store.viewing === i ? ' active' : '');
     b.textContent = s.name;
     b.dataset.i = String(i);
     w.appendChild(b);
   });
   const now = document.createElement('button');
+  now.type = 'button';
   now.className = 'snap now' + (store.viewing === null ? ' active' : '');
   now.textContent = 'now';
   now.dataset.i = 'now';

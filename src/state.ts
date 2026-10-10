@@ -19,6 +19,23 @@ export const CHIPS: Record<Level, readonly string[]> = {
   code: [],
 };
 
+/** What each chip means, shown as the chip's tooltip and quoted by the ask flow. */
+export const CHIP_HELP: Record<string, string> = {
+  live: 'This future is arriving: most of its signposts have moved',
+  rising: 'More of its signposts just moved',
+  watch: 'Possible; few signposts have moved',
+  fading: 'Signposts moving away from it',
+  robust: 'Good in every future we can see',
+  hedge: 'Cheap to keep open; pays off in one future',
+  fragile: 'Depends on a belief with weak evidence, or its trigger has fired',
+  fact: 'Observed; backed by data',
+  interpretation: 'A reading of the evidence',
+  prediction: 'A guess about the future',
+  unplaced: 'Added from a prompt; not yet linked to anything',
+  changed: 'This flow changed in the last run',
+  unchanged: 'This flow did not change in the last run',
+};
+
 export type Card = {
   id: string;
   level: Level;
@@ -43,7 +60,7 @@ export type Card = {
   trendOn?: string | null;
   // Transient keys, only present while a run is touching this card (SPEC §6). `finish()` removes them.
   _phase?: CellPhase | null;
-  _status?: string | null; // preparing: "Reading…" / "Preparing…"
+  _status?: string | null; // preparing: "Reading the milestone" / "Recomputing…"
   _note?: string | null; // preparing: what the agent is doing for this cell
   _prev?: Partial<Card> | null; // proposed: the old value of every field that moved, shown ghosted
 };
@@ -88,7 +105,7 @@ export type JobPhase = 'sizing' | 'intervene' | 'running';
 export type Direction = 'up' | 'down';
 export type Job = {
   phase: JobPhase;
-  kind: string; // 'milestone' | 'world' | 'tell' … shown in the meta line
+  kind: string; // 'milestone' | 'world' | 'unmatched' … shown nowhere now, kept for the test hook
   dir: Direction;
   levels: Level[]; // levels the ripple reaches, in run order
   touches: string; // "1 milestone, 2 product flows …"
@@ -96,14 +113,15 @@ export type Job = {
   total: number;
 };
 
-export type LevelDef = { id: Level; name: string; entry?: 'top' | 'bottom' };
+export type LevelDef = { id: Level; name: string; sub: string; entry?: 'top' | 'bottom' };
 
+/** The five levels, top to bottom. Display names and one-line subs follow the reference. */
 export const LEVELS: LevelDef[] = [
-  { id: 'world', name: 'World', entry: 'top' },
-  { id: 'assumptions', name: 'Assumptions' },
-  { id: 'initiatives', name: 'Initiatives' },
-  { id: 'product', name: 'Product' },
-  { id: 'code', name: 'Code', entry: 'bottom' },
+  { id: 'world', name: 'World', sub: 'Which future is arriving. Scenarios move when their signposts do.', entry: 'top' },
+  { id: 'assumptions', name: 'Beliefs', sub: 'What we think is true, how much evidence we have, and how much is riding on each one.' },
+  { id: 'initiatives', name: 'Bets', sub: "What we're building, and which beliefs each one depends on." },
+  { id: 'product', name: 'Product', sub: 'Screens and flows that changed.' },
+  { id: 'code', name: 'Code', sub: 'What actually shipped.', entry: 'bottom' },
 ];
 
 export const SRC: Record<string, Source> = sourcesJson as Record<string, Source>;
@@ -124,6 +142,11 @@ export const store = {
   job: null as Job | null, // non-null while a run is in progress
   abort: false,
   open: {} as Record<string, boolean>, // expanded cards
+  introHidden: false, // the intro strip goes on the first run or on "hide"
+  // The rail (SPEC §8 layout): which level the run is working in, which it has touched, and which way it moves.
+  activeLevel: null as Level | null,
+  touched: new Set<Level>(),
+  runDir: null as Direction | null,
 };
 
 /** The state currently on screen: live state, or the snapshot being viewed. */
@@ -141,6 +164,8 @@ export function byId(id: string): Card | undefined {
 }
 
 export const dots = (n: number): string => '●'.repeat(n) + '○'.repeat(5 - n);
+
+export const plural = (n: number, w: string): string => `${n} ${w}${n === 1 ? '' : 's'}`;
 
 /**
  * The chip a card shows, or null for none. Assumptions use `kind`; product cards

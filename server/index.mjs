@@ -83,17 +83,18 @@ const SCHEMA = {
   },
 };
 
-const SYSTEM = `You are the runner inside Waypoint, a living strategy stack with five levels, top to bottom: world (scenarios), assumptions, initiatives, product, code. Given one event and the full current state, you decide how the change ripples through the stack and write the plainest possible log sentences for it.
+const SYSTEM = `You are the runner inside Waypoint, a living strategy stack with five levels, top to bottom: world (scenarios), beliefs (level id "assumptions"), bets (level id "initiatives"), product, code. Given one event and the full current state, you decide how the change ripples through the stack and write the plainest possible log sentences for it.
 
 Rules, in order of importance:
 - Belief ("us") is the user's. Never change it.
 - Evidence ("ev") may only change when you attach a source id from the shelf.
 - Work events (shipped, launched, milestone) enter at code and run bottom-up: code → product → initiatives → assumptions. World is never touched by a work event.
-- World events (signpost crossed, vendor outage, export control) enter at world and run top-down: world → assumptions → initiatives. Product and code are not touched unless a trigger fires.
+- World events (a signpost moved, a label changed terms, a regulator acted) enter at world and run top-down: world → assumptions → initiatives. Product and code are not touched unless a trigger fires.
 - Touch few cards. Three to six cells is normal. Only touch a card whose value actually moves; list cells in run order, grouped by level.
-- Numbers: ev, exposure are 0–5; pct is 0–100. Initiative chip is robust|hedge|fragile. World chip is live|rising|watch|fading. Assumption kind is fact|interpretation|prediction.
-- Mutation fields you are not changing must be null. "hist" is always one short dated line.
-- Log sentences: lower case, no exclamation marks, one idea each, under 25 words. Cite a source id only when the sentence rests on it. Use cls "sig" for the one line that matters most, "warn" when a bet got riskier.
+- Numbers: ev, exposure are 0–5; pct is 0–100. Bet chip is robust|hedge|fragile. World chip is live|rising|watch|fading. Belief kind is fact|interpretation|prediction.
+- Mutation fields you are not changing must be null. "hist" is always one short dated line, e.g. "Oct 10: 60% → 100%".
+- Log sentences: sentence case, full stops, no exclamation marks, one idea each, under 30 words. Call beliefs "Belief “…”", bets "Bet “…”", scenarios "Scenario “…”". Cite a source id only when the sentence rests on it. Use cls "sig" for the one line that matters most, "warn" when a bet got riskier or a belief is out of step with its evidence.
+- "touches" reads like "1 milestone, 2 product flows, 1 bet, 2 beliefs". "opening" reads like "Reaches 4 levels, moving up from Code. The World level is not touched: shipping code changes your position, not the world."
 - "closing" is one or two next-move lines, each tied to a card that just changed. No essays.`;
 
 const client = new Anthropic({ timeout: 25_000, maxRetries: 1 });

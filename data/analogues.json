@@ -1,50 +1,8 @@
 {
-  "classifieds": {
-    "id": "classifieds",
-    "t": "Newspapers and classifieds, 1998–2010",
-    "what": "listing distribution",
-    "where": "vertical marketplaces (Rightmove, Auto Trader)",
-    "tracked": "share of listings moving online",
-    "believed": "\"readers come to us for the paper, the ads follow\""
-  },
-  "appstore": {
-    "id": "appstore",
-    "t": "App stores, 2008–",
-    "what": "distribution of software",
-    "where": "the platform owner, who sets the terms",
-    "tracked": "platform policy changes, take rates",
-    "believed": "\"we are a customer, not a tenant\""
-  },
-  "seo": {
-    "id": "seo",
-    "t": "Search and SEO, 2004–2024",
-    "what": "being found",
-    "where": "whoever ranked, then whoever is cited",
-    "tracked": "organic click-through by query type",
-    "believed": "\"organic traffic is a permanent channel\""
-  },
-  "travel": {
-    "id": "travel",
-    "t": "Travel agents and OTAs, 1996–2008",
-    "what": "booking a simple trip",
-    "where": "complex, high-trust, high-value trips",
-    "tracked": "share of bookings self-served",
-    "believed": "\"people need a human to book\""
-  },
-  "netflix": {
-    "id": "netflix",
-    "t": "Netflix DVD-by-mail → streaming, 2007",
-    "what": "physical delivery",
-    "where": "on-demand delivery",
-    "tracked": "US broadband penetration (the trigger)",
-    "believed": "the survivor pre-registered the threshold and waited"
-  },
-  "mobilefirst": {
-    "id": "mobilefirst",
-    "t": "Mobile-first design, 2010",
-    "what": "desktop-first layouts",
-    "where": "teams that rebuilt early",
-    "tracked": "mobile share of sessions",
-    "believed": "\"we will wait until it is proven\", then rebuilt twice"
-  }
+  "itunes": { "t": "CDs → iTunes → streaming, 2001–2015", "what": "owning a copy", "where": "the platform that owned the listener relationship", "tracked": "share of listening that was on-demand", "believed": "“people want to own music”" },
+  "radio": { "t": "Radio DJs → algorithmic playlists, 2008–2016", "what": "human curation at scale", "where": "whoever held the listening data", "tracked": "share of streams from editorial vs algorithmic sources", "believed": "“taste can't be automated”" },
+  "getty": { "t": "Stock photography vs generated images, 2022–", "what": "ordinary images", "where": "verified provenance and licensed catalogues", "tracked": "share of new uploads that were generated", "believed": "“buyers won't accept synthetic images”" },
+  "appstore": { "t": "App stores, 2008–", "what": "distribution of software", "where": "the platform owner, who sets the terms", "tracked": "platform policy changes, take rates", "believed": "“we are a customer, not a tenant”" },
+  "contentid": { "t": "YouTube Content ID, 2007–", "what": "policing rights by hand", "where": "the platform that could identify rights at scale", "tracked": "claims per upload; share of revenue to rights-holders", "believed": "“rights-holders will sue us out of existence”" },
+  "netflix": { "t": "Netflix DVD-by-mail → streaming, 2007", "what": "physical delivery", "where": "on-demand delivery", "tracked": "US broadband penetration (the trigger)", "believed": "the survivor set the threshold in advance and waited" }
 }

@@ -3,148 +3,118 @@
     {
       "id": "w1",
       "level": "world",
-      "title": "Agent Concierge",
-      "sub": "agents · cheap intelligence",
+      "title": "Agents pick the music",
+      "sub": "assistants choose · AI is cheap",
       "chip": "live",
-      "f": { "signposts": "3 / 4 hit", "lastMoved": "Sep 2026" },
-      "sources": ["similarweb", "bluestate", "epoch"],
+      "f": { "signposts": "3 / 4 moved", "lastMoved": "Sep 2026" },
+      "sources": ["similarweb", "epoch", "pew"],
       "signposts": [
-        "AI chatbot share of referrals > 1% (Statcounter)",
-        "AI referrals to our site > 5% of new-donor sessions (GA4)",
-        "price per capability halving within 6 months (Epoch)",
-        "agent payment rails in a UK provider"
+        "AI assistant referrals to music services > 2% of sessions",
+        "price per unit of AI capability halves within 6 months",
+        "a major assistant ships \"play me something\" with no app open",
+        "agent payment or subscription rails in a major market"
       ],
       "hist": []
     },
     {
       "id": "w2",
       "level": "world",
-      "title": "Walled Gardens",
-      "sub": "agents · gated intelligence",
+      "title": "Artists must prove they're human",
+      "sub": "trust tightens · provenance required",
       "chip": "watch",
-      "f": { "signposts": "1 / 4 hit", "lastMoved": "Jun 2026" },
-      "sources": ["bis"],
+      "f": { "signposts": "1 / 4 moved", "lastMoved": "Jul 2026" },
+      "sources": ["spotpolicy", "deezer"],
       "signposts": [
-        "frontier vendor availability incident > 72h",
-        "single platform > 50% of gen-AI traffic",
-        "export-control or licensing action affecting UK",
-        "enterprise model allowlists tighten"
+        "> 25% of daily uploads fully AI-generated",
+        "a regulator requires disclosure of AI-made music",
+        "a major label makes provenance a licensing condition",
+        "listener surveys: majority want AI tracks labelled"
       ],
       "hist": []
     },
     {
       "id": "a1",
       "level": "assumptions",
-      "title": "AI assistants will mediate how donors find causes",
+      "title": "Listeners will let an AI assistant choose for them",
       "kind": "interpretation",
       "ev": 3,
       "us": 4,
       "exposure": 1,
-      "sources": ["bluestate", "similarweb", "pew", "footprint"],
-      "analogue": "classifieds",
-      "hist": ["Jul: ev ●●○○○ → ●●●○○ (Blue State data)"]
+      "sources": ["similarweb", "pew"],
+      "analogue": "radio",
+      "hist": ["Jul: evidence ●●○○○ → ●●●○○ (assistant referral data)"]
     },
     {
       "id": "a2",
       "level": "assumptions",
-      "title": "Our AI vendor stays available on current terms",
-      "kind": "prediction",
-      "ev": 3,
+      "title": "AI-made tracks will flood the catalogue",
+      "kind": "fact",
+      "ev": 4,
       "us": 4,
-      "exposure": 0,
-      "sources": ["bis"],
-      "analogue": "appstore",
+      "exposure": 1,
+      "sources": ["deezer", "velvet", "spotpolicy"],
+      "analogue": "getty",
       "hist": []
     },
     {
       "id": "a3",
       "level": "assumptions",
-      "title": "Organic search keeps bringing new donors",
-      "kind": "interpretation",
+      "title": "Our recommendation engine stays the moat",
+      "kind": "prediction",
       "ev": 2,
-      "us": 3,
-      "exposure": 1,
-      "sources": ["pew", "bluestate"],
-      "analogue": "seo",
-      "hist": ["Jul: us ●●●●○ → ●●●○○ (team review)"]
+      "us": 4,
+      "exposure": 0,
+      "sources": ["slywotzky"],
+      "analogue": "itunes",
+      "hist": ["Jul: belief ●●●●● → ●●●●○ (team review)"]
     },
     {
       "id": "a4",
       "level": "assumptions",
-      "title": "Donors trust institutions over AI answers",
-      "kind": "fact",
-      "ev": 4,
+      "title": "Labels keep licensing on current terms",
+      "kind": "prediction",
+      "ev": 3,
       "us": 4,
-      "exposure": 1,
-      "sources": ["genrep", "fai"],
-      "analogue": "travel",
+      "exposure": 2,
+      "sources": ["ifpi", "suno", "umgudio"],
+      "analogue": "appstore",
       "hist": []
     },
     {
       "id": "i1",
       "level": "initiatives",
-      "title": "Agent-facing giving API",
-      "pct": 20,
-      "rests": ["a1", "a2"],
+      "title": "AI DJ v2",
+      "pct": 60,
+      "rests": ["a1", "a4"],
       "chip": "hedge",
-      "trigger": "if primary-model outage > 72h → add a second provider",
+      "trigger": "if a label withdraws AI-feature rights → ship with licensed catalogue only",
       "hist": []
     },
     {
       "id": "i2",
       "level": "initiatives",
-      "title": "Giving-discovery SEO",
-      "pct": 80,
-      "rests": ["a3"],
-      "chip": "fragile",
-      "trigger": "if AI referrals > 20% of new-donor sessions → revisit SEO budget",
-      "hist": []
-    },
-    {
-      "id": "i3",
-      "level": "initiatives",
-      "title": "Open, citable charity data",
-      "pct": 50,
-      "rests": ["a4"],
+      "title": "Verified-human artist badge",
+      "pct": 20,
+      "rests": ["a2"],
       "chip": "robust",
       "trigger": "",
       "hist": []
     },
     {
-      "id": "p1",
-      "level": "product",
-      "title": "Donor discovery flow",
-      "note": "cause search, CauseFinder listing",
+      "id": "i3",
+      "level": "initiatives",
+      "title": "Open listening-history API for agents",
+      "pct": 40,
+      "rests": ["a1", "a4"],
+      "chip": "hedge",
+      "trigger": "if label terms change for third-party AI use → pause external access",
       "hist": []
     },
-    {
-      "id": "p2",
-      "level": "product",
-      "title": "Partner search",
-      "note": "verified-partner directory",
-      "hist": []
-    },
-    {
-      "id": "p3",
-      "level": "product",
-      "title": "Giving app",
-      "note": "Pay by Bank, Gift Aid summaries",
-      "hist": []
-    },
-    {
-      "id": "c1",
-      "level": "code",
-      "title": "Last milestone: Pay by Bank",
-      "note": "6 files · payments/* · Sep 2026",
-      "hist": []
-    }
+    { "id": "p1", "level": "product", "title": "Home feed", "note": "daily mixes, editorial shelves", "hist": [] },
+    { "id": "p2", "level": "product", "title": "AI DJ", "note": "voice host, on-demand sessions", "hist": [] },
+    { "id": "p3", "level": "product", "title": "Artist profile", "note": "bio, credits, verification", "hist": [] },
+    { "id": "c1", "level": "code", "title": "Last milestone: Jam sessions", "note": "22 files · social/* · Sep 2026", "hist": [] }
   ],
-  "expanded": {
-    "world": true,
-    "assumptions": true,
-    "initiatives": true,
-    "product": false,
-    "code": false
-  },
+  "expanded": { "world": true, "assumptions": true, "initiatives": true, "product": false, "code": false },
   "changed": {}
 }
