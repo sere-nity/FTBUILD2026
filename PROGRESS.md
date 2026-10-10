@@ -79,3 +79,16 @@ Append one entry per iteration. Newest at the bottom. Keep each entry short: wha
 - README: bar paragraph in "Look".
 - Ticked check 19. Stack-and-cards section complete.
 - Next: Runner section, check 20 (job header with phase, "Reaches N levels", k/n cells, Stop, progress bar). Markup exists in `main.ts`; needs `runner/scripted.ts` to drive it: start with a `startJob/endJob` + job state in the store and the Flow A sizing step, then the state machine checks 21–26 build on it.
+
+### 8 · job header: phase, "Reaches N levels", k/n cells, Stop, progress bar
+- Built the runner core. `store.job` (phase sizing | intervene | running, dir, levels, touches, done/total) is the only source for the job header, the `.scanning` dim on levels and the "◀ entered here" marker; `renderJob()` in `render.ts` draws all three from it. `src/log.ts` (logEntry, logLine, cite, baseline "Jul" entry on load). `src/runner/scripted.ts` ports Flow A (sizing → c1 → p1, p2 → i1 → a1, a2, Product and Code collapse at the end) with every delay from `runner/timing.ts`. `bar.ts` gained `classify(text)` (the reference's five regexes); `main.ts` routes only `milestone` to the runner for now. Stop button and Esc abort at the next await.
+- New `verify/job.spec.ts` (4 tests × 4 viewports, 144 passing in total). Drives Flow A from the hint chip at real demo timing (~11s per project).
+- Fixed from the run: a stopped run left trend/_status keys on every card (now deleted, and trends clear only once the run proceeds, so Stop in the window is a true no-op, asserted by serialising state); reference counted 7 cells for six settles (total is 6 now); orphaned "·" in the intervene meta at 400px (two flex children, no glyph).
+- Decision: k/n total is 6, not the reference's 7. The spec wants an honest count; the reference never reaches 7/7. Noted in `scripted.ts`.
+- Decision: `.scanning` is added one frame after the stack is rebuilt so the dim transitions in (render rebuilds the DOM, so a class present at creation would not animate).
+- Decision: the "2s to intervene" warning is a `.warn` span (token colour), not the reference's inline style, so the no-inline-colour check holds.
+- Verify: looked at `verify/shots/job/01-sizing`, `02-reaches`, `03-cells`, `04-done`, `05-after`, `06-stopped` across the four projects. Report in `verify/REPORT.md`.
+- Design review new items: entry marker on Code is below the fold at desktop during the window; header spinner still turns at 6/6. Both UX-phase candidates.
+- README: "Runner" section.
+- Ticked check 20.
+- Next: check 21 (`scanning` dims every level ~1.1s, untouched levels snap back solid). The mechanism exists; needs assertions on opacity ≈ 0.35 during sizing, 1 after, and timing within ~1.1s, plus screenshots mid-dim. Then 22 (intervene window, Esc leaves state unchanged — the state-equality assertion from this iteration covers most of it).
