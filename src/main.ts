@@ -43,3 +43,10 @@ document.querySelector('#stack')!.addEventListener('click', (ev) => {
 });
 
 render();
+
+// Test hook: verify/ scripts mutate the store and re-render to reach states the seed
+// does not start in (e.g. an evidence/belief gap). Not used by the app itself.
+declare global {
+  interface Window { __waypoint: { store: typeof store; render: typeof render } }
+}
+window.__waypoint = { store, render };

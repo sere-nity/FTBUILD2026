@@ -20,3 +20,5 @@ Iteration 2 done. Three commits on main.
 **Open defects noted in REPORT.md**: empty status row reserves 16px on idle cards (kept, stops jump on spinner); initiative rests-on/trigger truncated (matches reference); log column empty until baseline entry exists.
 
 **Next iteration**: ⚠ gap check, chip enums, card expand in place (checks 15–17).
+autosaved
+=== iteration 2  01:12:29 ===
