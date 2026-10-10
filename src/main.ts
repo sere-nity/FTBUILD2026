@@ -1,7 +1,9 @@
 import './style.css';
-import { store, visible } from './state';
+import { store, visible, running } from './state';
 import { render } from './render';
-import { initBar } from './bar';
+import { initBar, setSubmit, classify } from './bar';
+import { initLog } from './log';
+import { runMilestone, stop } from './runner/scripted';
 
 const app = document.querySelector<HTMLDivElement>('#app')!;
 app.innerHTML = `
@@ -27,6 +29,20 @@ app.innerHTML = `
   </main>
 `;
 initBar(app);
+initLog();
+
+// Bar → runner. Only the milestone path exists so far; the other intents land in the
+// Flow checks. Nothing runs while a run is in progress or a past snapshot is shown.
+setSubmit((text) => {
+  if (running() || store.viewing !== null) return;
+  if (classify(text) === 'milestone') void runMilestone(text);
+});
+
+// Stop · Esc. During the intervene window this leaves the state unchanged.
+document.querySelector('#stop')!.addEventListener('click', stop);
+document.addEventListener('keydown', (ev) => {
+  if (ev.key === 'Escape') stop();
+});
 
 // Stack clicks: expand a collapsed level, or toggle a card's detail in place.
 document.querySelector('#stack')!.addEventListener('click', (ev) => {
@@ -50,6 +66,6 @@ render();
 // Test hook: verify/ scripts mutate the store and re-render to reach states the seed
 // does not start in (e.g. an evidence/belief gap). Not used by the app itself.
 declare global {
-  interface Window { __waypoint: { store: typeof store; render: typeof render } }
+  interface Window { __waypoint: { store: typeof store; render: typeof render; runMilestone: typeof runMilestone } }
 }
-window.__waypoint = { store, render };
+window.__waypoint = { store, render, runMilestone };

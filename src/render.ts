@@ -1,7 +1,7 @@
 // One render(state) function. The DOM is a function of the store, same as the reference.
 import {
-  LEVELS, SRC, ANALOGUES, store, visible, byId, dots, chipFor,
-  type Card, type State,
+  LEVELS, SRC, ANALOGUES, store, visible, byId, dots, chipFor, entryLevel,
+  type Card, type State, type Job,
 } from './state';
 
 const $ = <T extends Element = HTMLElement>(s: string): T => document.querySelector<T>(s)!;
@@ -47,11 +47,54 @@ export function render(): void {
     stack.appendChild(el);
   }
   renderSnaps();
+  renderJob(store.job);
   $('#cmp').classList.toggle('on', store.compare);
   const ro = $('#ro');
   ro.hidden = store.viewing === null;
   if (store.viewing !== null) {
     ro.textContent = `Viewing snapshot “${store.snapshots[store.viewing].name}” · read-only · click “now” to return`;
+  }
+}
+
+const plural = (n: number, w: string): string => `${n} ${w}${n === 1 ? '' : 's'}`;
+
+/** What the job header says in each phase (SPEC §6). */
+export function jobText(j: Job): { title: string; meta: string; pct: number } {
+  const dir = j.dir === 'up' ? 'bottom-up' : 'top-down';
+  const reach = `Reaches ${plural(j.levels.length, 'level')}`;
+  if (j.phase === 'sizing') return { title: 'Sizing change…', meta: 'scanning all levels', pct: 5 };
+  if (j.phase === 'intervene') {
+    return { title: `${reach} · ${dir}`, meta: `touches: ${esc(j.touches)} &nbsp;·&nbsp; <span class="warn">2s to intervene</span>`, pct: 12 };
+  }
+  const frac = j.total ? j.done / j.total : 0;
+  return { title: `${reach} · ${j.done}/${j.total} cells done`, meta: `${dir} · ${esc(j.kind)}`, pct: 12 + frac * 88 };
+}
+
+/**
+ * Job header, level dimming and the entry marker, all from `store.job`.
+ * `.scanning` is added one frame after the levels are built so the dim transitions in.
+ */
+function renderJob(j: Job | null): void {
+  const job = $('#job');
+  job.hidden = j === null;
+  const levels = Array.from(document.querySelectorAll<HTMLElement>('.level'));
+  for (const el of levels) el.querySelector('[data-entry]')!.textContent = '';
+  if (!j) {
+    for (const el of levels) el.classList.remove('scanning');
+    return;
+  }
+  const t = jobText(j);
+  $('#jobtitle').textContent = t.title;
+  $('#jobmeta').innerHTML = t.meta;
+  $('#jobbar').style.width = `${t.pct}%`;
+  if (j.phase === 'sizing') {
+    requestAnimationFrame(() => {
+      if (store.job?.phase === 'sizing') for (const el of levels) el.classList.add('scanning');
+    });
+  } else {
+    for (const el of levels) el.classList.remove('scanning');
+    const entry = document.querySelector(`.level[data-level="${entryLevel(j.dir)}"] [data-entry]`);
+    if (entry) entry.textContent = '◀ entered here';
   }
 }
 

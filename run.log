@@ -90,3 +90,5 @@ Iteration 7 done. Check 19 ticked with evidence.
 - Report, CHECKS tick, README bar paragraph, PROGRESS entry. Three commits.
 
 **Next run**: Runner section, check 20 (job header). Markup exists in `main.ts`; needs `runner/scripted.ts` with job state and Flow A sizing step.
+autosaved
+=== iteration 7  01:32:10 ===

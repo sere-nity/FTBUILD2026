@@ -10,6 +10,18 @@ export const HINTS: ReadonlyArray<readonly [text: string, title: string]> = [
   ['donors will want AI to pick causes for them', 'unmatched · one unplaced card'],
 ];
 
+export type Intent = 'ask' | 'inspect' | 'world' | 'milestone' | 'unmatched';
+
+/** Intent routing (SPEC §5), same order and patterns as the reference. */
+export function classify(text: string): Intent {
+  const t = text.trim();
+  if (/\?\s*$/.test(t) || /^(why|what|which|how)\b/i.test(t)) return 'ask';
+  if (/repo|inspect|look at the code/i.test(t)) return 'inspect';
+  if (/world update|signpost|vendor|outage|export/i.test(t)) return 'world';
+  if (/ship|api|agent|milestone|launch/i.test(t)) return 'milestone';
+  return 'unmatched';
+}
+
 export type Submit = (text: string) => void;
 
 let onSubmit: Submit = () => {};

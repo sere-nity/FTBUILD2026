@@ -33,11 +33,8 @@ const richState = (page: Page) =>
     store.state.changed['p1'] = 'exposed to agents';
     store.state.cards.find((c) => c.id === 'a2')!.ev = 1;
     store.open['a1'] = true;
+    store.job = { phase: 'running', kind: 'milestone', dir: 'up', levels: ['code', 'product', 'initiatives', 'assumptions'], touches: '', done: 2, total: 7 };
     render();
-    const job = document.querySelector<HTMLElement>('#job')!;
-    job.hidden = false;
-    document.querySelector('#jobmeta')!.textContent = 'reaches 3 levels · 2 / 7 cells';
-    document.querySelector<HTMLElement>('#jobbar')!.style.width = '30%';
     const ro = document.querySelector<HTMLElement>('#ro')!;
     ro.hidden = false;
     ro.textContent = 'Viewing Jul · read only';

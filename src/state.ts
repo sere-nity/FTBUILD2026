@@ -71,6 +71,22 @@ export type Snapshot = {
   state: State;
 };
 
+/**
+ * The job header's state (SPEC §6). `sizing` while classify scans every level,
+ * `intervene` for the 2s window after the plan is shown, `running` while cells settle.
+ */
+export type JobPhase = 'sizing' | 'intervene' | 'running';
+export type Direction = 'up' | 'down';
+export type Job = {
+  phase: JobPhase;
+  kind: string; // 'milestone' | 'world' | 'tell' … shown in the meta line
+  dir: Direction;
+  levels: Level[]; // levels the ripple reaches, in run order
+  touches: string; // "1 milestone, 2 product flows …"
+  done: number;
+  total: number;
+};
+
 export type LevelDef = { id: Level; name: string; entry?: 'top' | 'bottom' };
 
 export const LEVELS: LevelDef[] = [
@@ -96,7 +112,7 @@ export const store = {
   snapshots: [{ name: 'Jul', state: seed(), at: '2026-07-14' }] as Snapshot[],
   viewing: null as number | null, // index into snapshots when read-only
   compare: false,
-  running: false,
+  job: null as Job | null, // non-null while a run is in progress
   abort: false,
   open: {} as Record<string, boolean>, // expanded cards
 };
@@ -105,6 +121,11 @@ export const store = {
 export function visible(): State {
   return store.viewing === null ? store.state : store.snapshots[store.viewing].state;
 }
+
+export const running = (): boolean => store.job !== null;
+
+/** The level a run enters at: Code for work events (bottom-up), World for world events. */
+export const entryLevel = (dir: Direction): Level => (dir === 'up' ? 'code' : 'world');
 
 export function byId(id: string): Card | undefined {
   return store.state.cards.find((c) => c.id === id);
