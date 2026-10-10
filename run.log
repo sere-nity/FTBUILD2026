@@ -54,3 +54,15 @@ Iteration 4 done. Check 16 ticked.
 **Next**: check 17, card expands in place, stack no shift.
 autosaved
 === iteration 4  01:17:57 ===
+Iteration 5 done. Check 17 ticked.
+
+**Did**
+- New `verify/expand.spec.ts`: 6 tests × 4 viewports. 88 pass total.
+- Fixed from screenshots: row-mates stretched to open card height (two ~700px empty boxes). `.cards:has(.detail) { align-items: start }`. Detail "rests on" dots now mono. Both have assertions.
+- "Stack doesn't move" asserted: no x/width change anywhere, nothing above or beside moves, below shifts by exactly detail height, collapse restores exactly, scrollY unchanged.
+
+**Commits**: `bdfa00d` feat + screenshots, `0285008` progress + report + tick.
+
+**Design defects carried**: full citation sentences as link text on 230px cards, dead band above dashed rule from empty status row, 3+1 assumptions grid, truncated rests-on/trigger, double "changed" on product cards.
+
+**Next**: check 18, themes and colour tokens.
