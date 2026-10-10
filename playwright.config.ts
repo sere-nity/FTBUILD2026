@@ -2,7 +2,7 @@ import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
   testDir: './verify',
-  outputDir: './verify/shots',
+  outputDir: './verify/.out',
   use: {
     baseURL: 'http://localhost:5173',
     screenshot: 'off',

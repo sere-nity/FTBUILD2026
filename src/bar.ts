@@ -33,6 +33,7 @@ export function initBar(root: HTMLElement): void {
   </div>`,
   );
 
+  const wrap = root.querySelector<HTMLDivElement>('.barwrap')!;
   const hints = root.querySelector<HTMLDivElement>('#hints')!;
   const input = root.querySelector<HTMLInputElement>('#prompt')!;
   const form = root.querySelector<HTMLFormElement>('#form')!;
@@ -46,6 +47,12 @@ export function initBar(root: HTMLElement): void {
     b.addEventListener('click', () => submit(text));
     hints.appendChild(b);
   }
+
+  // The bar is fixed and its height changes with viewport width (hints wrap at 400px).
+  // Publish it as --bar-h so the page can pad its bottom and nothing hides behind the bar.
+  const publish = () => document.documentElement.style.setProperty('--bar-h', `${wrap.offsetHeight}px`);
+  publish();
+  new ResizeObserver(publish).observe(wrap);
 
   form.addEventListener('submit', (ev) => {
     ev.preventDefault();

@@ -125,10 +125,11 @@ main {
   gap: 0;
   min-height: calc(100% - 52px);
 }
-.stack { padding: 18px 20px 120px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+/* --bar-h is the measured height of the fixed prompt bar (set in bar.ts); 120px before it mounts. */
+.stack { padding: 18px 20px calc(var(--bar-h, 120px) + 16px); display: flex; flex-direction: column; gap: 14px; min-width: 0; }
 .log {
   border-left: 1px solid var(--rule);
-  padding: 16px 18px 120px;
+  padding: 16px 18px calc(var(--bar-h, 120px) + 16px);
   font-family: var(--mono);
   font-size: 12px;
   color: var(--ink-2);
@@ -136,6 +137,7 @@ main {
 }
 @media (max-width: 860px) {
   main { grid-template-columns: 1fr; }
+  .stack { padding-bottom: 18px; }
   .log { border-left: 0; border-top: 1px solid var(--rule); }
 }
 

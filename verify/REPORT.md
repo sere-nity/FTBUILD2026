@@ -133,3 +133,29 @@ Body background is opaque and equals the resolved `--paper`; luminance < 0.05 in
 2. The darker `--ink-3` makes field keys (evidence, belief, shipped) heavier than the reference, so key and value are closer in weight. Hierarchy still holds because values are in `--ink` and keys in `--ink-3`, but watch it once ghosts (also `--ink-3`, struck through) appear beside new values in the `proposed` state.
 3. The black `now` pill in the top bar is the highest-contrast element on an idle screen, ahead of anything that changed. Matches the reference. Revisit in UX phase (outline instead of fill).
 4. Carried: full citation sentences as link text on 230px cards; dead 16px status band; 3+1 assumptions grid; truncated rests-on/trigger; double "changed" on product cards; ⚠ glyph small.
+
+## 2026-10-10 · Iteration 7 · 400px: no horizontal scroll, log below the stack, bar fits (check 19)
+
+Run 1 (phone spec alone, bar shell just mounted): 20 passed, but the screenshots showed the bar covering the "Log" heading at 400px. Added the assertion, negative check with the old CSS: fails at phone-light with `.log > :last-child bottom vs bar top: Expected <= 633.9, Received 679.5`, so it bites. Run 2 (full): 128 passed. New spec `verify/phone.spec.ts` (5 tests × 4 viewports).
+
+Also moved Playwright `outputDir` from `verify/shots` to `verify/.out` (ignored). Before, every run wiped all screenshot sets and dropped failure artefacts among the evidence.
+
+### Screenshots reviewed
+- `verify/shots/phone/03-bar-at-bottom.phone-light.png` (run 1): page scrolled to the end; the three rows of hint chips plus the prompt stood ~170px tall and sat over the "Log" heading (only the "L" showed). A ~120px empty band separated the Code level from the log.
+- `verify/shots/phone/03-bar-at-bottom.phone-light.png` (run 2): LOG heading fully visible above the chips; Code "expand" to LOG rule is one normal level gap. Prompt spans the width with 20px margins, ⌘K kbd at the right edge, pen glyph at the left. Nothing clipped.
+- `verify/shots/phone/03-bar-at-bottom.desktop-light.png`: five chips on one row centred under the stack + log, prompt 680px centred, both inside the viewport. Stack and log columns end above the bar.
+- `verify/shots/phone/04-bar-focused.phone-dark.png`: prompt border turns signal blue on focus, "hello" in ink, chips keep their card background over the dimmer cards behind them and stay readable.
+- `verify/shots/phone/01-first-load.phone-dark.png` (full page): single column, log below stack, bottom padding under LOG equals the bar height. The bar appears mid-page in the capture because fixed elements are drawn at the viewport position in full-page shots; not a layout defect.
+
+### Defects fixed
+1. Bar covered the log at 400px: `.stack`/`.log` had a fixed 120px bottom padding, the wrapped bar is taller. `bar.ts` now publishes the measured bar height as `--bar-h` (ResizeObserver) and the padding is `calc(var(--bar-h) + 16px)`. Assertion: at scroll bottom, the last level and the log's last child end above `.barwrap`.
+2. Dead band between stack and log at phone: stack bottom padding is 18px below 860px; only the log carries the bar padding. Assertion: log top within 4px of stack bottom at phone.
+
+### Assertions added
+Document `scrollWidth ≤ clientWidth` and no element's right edge past the viewport, on first load and with every level and card open; log below and full-width at ≤860px, beside and 320px wide at desktop; barwrap, prompt, input, kbd and every hint inside the viewport; prompt y unchanged after scrolling to the bottom (fixed); five hints with the reference text; placeholder text; ⌘K/Ctrl+K focuses the input; Enter clears it.
+
+### Design review (SPEC §7)
+1. At 400px the sticky top bar takes three rows (brand / snapshots / buttons, ~125px) and the bar takes ~170px, leaving ~500px of content. Candidate for UX phase: put the snapshot chips and buttons on one row at phone, or let the hints collapse to one scrolling row.
+2. Hint chips float over card content with transparent gaps between them (three rows at phone). Matches the reference. UX-phase candidate: a short paper fade behind the barwrap so the chips do not sit on top of a dot bar.
+3. The ⌘K kbd shows on phone where there is no keyboard shortcut. UX-phase candidate: hide `.kbd` below 860px.
+4. Carried: dark cards 1.09:1 against paper; black `now` pill loudest element; full citation sentences on cards; dead 16px status band; 3+1 assumptions grid; truncated rests-on/trigger; double "changed" on product cards; ⚠ glyph small.

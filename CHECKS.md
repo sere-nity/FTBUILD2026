@@ -16,7 +16,7 @@ Tick a box only when `npm run verify` evidence (assertions + screenshots you hav
 - [x] Chips use only the enums in SPEC §3
 - [x] Card expands in place with evidence links, "resting on this", analogue block, history; the rest of the stack doesn't shift
 - [x] Light and dark themes both legible; every colour from a token; body has explicit background
-- [ ] 400px wide: no horizontal scroll, log moves below the stack, bar fits
+- [x] 400px wide: no horizontal scroll, log moves below the stack, bar fits
 
 ## Runner and state machine
 - [ ] Job header appears with phase, "Reaches N levels", k/n cells, Stop button, progress bar

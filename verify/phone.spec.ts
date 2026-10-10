@@ -58,6 +58,8 @@ test.describe('phone width', () => {
     const w = page.viewportSize()!.width;
     if (w <= 860) {
       expect(log!.y).toBeGreaterThanOrEqual(stack!.y + stack!.height - 1);
+      // No dead band between the stack and the log (the bar padding belongs to the log only).
+      expect(log!.y - (stack!.y + stack!.height)).toBeLessThan(4);
       expect(log!.x).toBeCloseTo(stack!.x, 0);
       expect(log!.width).toBeCloseTo(stack!.width, 0);
     } else {
@@ -85,11 +87,15 @@ test.describe('phone width', () => {
     await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
     const after = await page.locator('.prompt').boundingBox();
     expect(after!.y).toBeCloseTo(before!.y, 0);
-    // Nothing in the stack or log is hidden behind the bar at the end of the page.
-    const lastEntry = page.locator('.stack .level').last();
-    const last = await lastEntry.boundingBox();
+    // Nothing in the stack or log is hidden behind the bar at the end of the page:
+    // the last level and the log heading (the log's last child while it is empty) both
+    // end above the bar wrapper. Regression: at 400px the hints wrap to three rows and
+    // the bar grew past the fixed 120px padding, covering the "Log" heading.
     const wrapBox = await wrap.boundingBox();
-    expect(last!.y + last!.height).toBeLessThanOrEqual(wrapBox!.y);
+    for (const sel of ['.stack .level:last-child', '.log > :last-child']) {
+      const b = await page.locator(sel).boundingBox();
+      expect(b!.y + b!.height, `${sel} bottom vs bar top`).toBeLessThanOrEqual(wrapBox!.y);
+    }
     await shot(page, testInfo.project.name, '03-bar-at-bottom', false);
   });
 
