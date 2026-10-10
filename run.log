@@ -187,3 +187,5 @@ Iteration 12 done. Check 24 ticked with evidence, four commits on `main`.
 - a1/a2 log lines run 4–6 visual lines vs §7's two-line intent.
 
 **Next**: check 25 (touched levels expand, Product/Code collapse at run end). Runner already does it; needs a per-frame `expanded` watcher spec.
+autosaved
+=== iteration 12  02:17:45 ===
