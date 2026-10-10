@@ -21,7 +21,7 @@ export function logEntry(kind: string, title: string): HTMLElement {
 export type LineClass = '' | 'sig' | 'warn';
 
 /** Append one line to an entry, then pause so the log reads at a human pace. */
-export async function logLine(e: HTMLElement, html: string, cls: LineClass = '', ms = TIMING.logLine): Promise<void> {
+export async function logLine(e: HTMLElement, html: string, cls: LineClass = '', ms: number = TIMING.logLine): Promise<void> {
   const l = document.createElement('div');
   l.className = ('l ' + cls).trim();
   l.innerHTML = html;

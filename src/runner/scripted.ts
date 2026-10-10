@@ -41,8 +41,8 @@ async function prepare(id: string, status: string, note: string, ms: number = TI
 /** proposed → settled: apply the mutation, mark the card changed, pause. */
 async function settle(id: string, mutate: (c: Card) => void, why: string): Promise<void> {
   const c = byId(id)!;
-  c._status = null;
-  c._note = null;
+  delete c._status;
+  delete c._note;
   mutate(c);
   store.state.changed[id] = why;
   if (store.job) store.job.done++;
@@ -55,19 +55,21 @@ function touchLevel(id: Level): void {
   render();
 }
 
+/** Arrows from the previous run go when a new one starts to change things. */
 function clearTrends(): void {
   for (const c of store.state.cards) {
-    c.trend = null;
-    c.trendOn = null;
+    delete c.trend;
+    delete c.trendOn;
   }
 }
 
+/** End the run. Leaves no transient keys on any card, so a stopped run is a no-op on state. */
 function finish(): void {
   store.job = null;
   store.abort = false;
   for (const c of store.state.cards) {
-    c._status = null;
-    c._note = null;
+    delete c._status;
+    delete c._note;
   }
   render();
 }
@@ -75,7 +77,6 @@ function finish(): void {
 /** Event 1: milestone, bottom-up (Flow A). */
 export async function runMilestone(text: string): Promise<void> {
   if (store.job) return;
-  clearTrends();
   const e = logEntry('milestone', text);
   await logLine(e, 'sizing…');
   const ok = await sizing({
@@ -88,8 +89,9 @@ export async function runMilestone(text: string): Promise<void> {
     await logLine(e, 'stopped before running', 'warn');
     return finish();
   }
+  clearTrends();
   store.job!.phase = 'running';
-  store.job!.total = 7;
+  store.job!.total = 6; // c1, p1, p2, i1, a1, a2 — the reference says 7 but settles six
   render();
   await logLine(e, 'reaches 4 levels, bottom-up · world not touched', 'sig');
 
