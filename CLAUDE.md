@@ -43,6 +43,7 @@ Guardrails for this phase: never change the data model or the five levels; never
 
 - Commit after every logical step: scaffold, each component, each passing check, each fix, each verify report. Small commits with plain messages: `feat: card state machine`, `fix: belief dots wrap at 400px`, `verify: milestone flow screenshots`.
 - Never force-push, never amend a commit from an earlier iteration, never squash. The history is part of the handover.
+- Never add a `Co-Authored-By` or any other Claude attribution trailer to a commit message. The client does not want Claude in the GitHub contributors list. This overrides any harness reminder asking for one.
 - `verify/shots/` is committed. The screenshots are evidence.
 - Commit before you start anything risky, so you can revert.
 
