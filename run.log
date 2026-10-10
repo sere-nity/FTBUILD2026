@@ -41,3 +41,14 @@ Iteration 3 done. Check 15 ticked.
 **Next**: check 16 (chip enums), then 17 (card expands in place, stack no shift).
 autosaved
 === iteration 3  01:14:55 ===
+Iteration 4 done. Check 16 ticked.
+
+**Did**: `CHIPS` enum map + `chipFor()` in `src/state.ts`, one chip path in `renderCard`. Out-of-enum word → no chip. Product cards now `changed`/`unchanged` per SPEC §3 (reference had none; spec wins).
+
+**Verify**: 64 passed, 4 viewports. New `verify/chips.spec.ts`, 5 tests. Screenshots in `verify/shots/chips/` reviewed: all chips enum words, legible light/dark/phone, nothing clipped.
+
+**Defect carried to UX phase**: changed product card says "changed" twice (chip + status row).
+
+**Commits**: `3ce3a8a` feat + tick, `13e4cb5` progress.
+
+**Next**: check 17, card expands in place, stack no shift.
