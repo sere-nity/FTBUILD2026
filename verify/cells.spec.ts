@@ -34,6 +34,9 @@ const GHOST: Record<string, [string, string]> = {
   a2: ['0 initiatives', '1 initiative'],
 };
 
+// Centre the card so it is not under the sticky top bar or the floating prompt bar.
+const centre = (l: ReturnType<Page['locator']>) => l.evaluate((el) => el.scrollIntoView({ block: 'center' }));
+
 const shot = (page: Page, name: string, frame: string) =>
   page.screenshot({ path: `verify/shots/cells/${frame}.${name}.png`, fullPage: false });
 
@@ -111,12 +114,13 @@ test.describe('cell state machine', () => {
     await expect(c1.locator('.status')).toContainText('Reading…');
     await expect(c1.locator('.status .note')).toHaveText(NOTE.c1);
     await expect(c1).not.toHaveClass(/changed|proposed/);
+    await centre(c1);
     await shot(page, testInfo.project.name, '01-preparing');
 
     // 2 · proposed: the new value with the old one ghosted beside it, accent on the card.
     const i1 = page.locator('.card[data-id="i1"]');
     await expect(i1).toHaveClass(/proposed/, { timeout: 20_000 });
-    await i1.scrollIntoViewIfNeeded();
+    await centre(i1);
     const shipped = i1.locator('.fields .v').first();
     await expect(shipped.locator('.ghost')).toHaveText('20%');
     await expect(shipped).toContainText('70%');
@@ -157,7 +161,7 @@ test.describe('cell state machine', () => {
     await expect(page.locator('.card[data-id="a1"] .arrow')).toHaveCount(1);
     await expect(page.locator('.card[data-id="a2"] .arrow')).toHaveCount(1);
     await expect(page.locator('.card .arrow')).toHaveCount(3); // i1, a1, a2
-    await page.locator('.card[data-id="a1"]').scrollIntoViewIfNeeded();
+    await centre(page.locator('.card[data-id="a1"]'));
     await shot(page, testInfo.project.name, '04-after');
 
     // 4 · the recorded timeline: every cell walked preparing → proposed → settled, in that order.
@@ -227,6 +231,7 @@ test.describe('cell state machine', () => {
     await expect(page.locator('.level[data-level="code"] .compact')).toBeVisible();
     await expect(page.locator('.level[data-level="product"] .count')).toHaveText('2 changed');
     await expect(page.locator('.level[data-level="code"] .count')).toHaveText('1 changed');
+    await centre(i1);
     await shot(page, testInfo.project.name, '05-stopped-mid-run');
     // The run is over: nothing settles later.
     await page.waitForTimeout(3_000);
