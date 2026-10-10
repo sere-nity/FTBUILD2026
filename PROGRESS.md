@@ -41,3 +41,11 @@ Append one entry per iteration. Newest at the bottom. Keep each entry short: wha
 - Design review defects carried: ⚠ glyph easy to miss at desktop (matches reference, UX phase); assumptions grid 3 + 1 with a lonely fourth card; truncated rests-on/trigger values; 16px reserved status row.
 - Ticked check 15.
 - Next: check 16 (chips only from SPEC §3 enums), then 17 (card expands in place, stack does not shift).
+
+### 4 · chips: enums only
+- Added `CHIPS` (per-level enum map) and `chipFor(card, state)` to `src/state.ts`; `renderCard` now has one chip path instead of three. Anything outside the enum renders no chip. Card types tightened (`WorldChip | InitiativeChip`, `AssumptionKind`).
+- Decision: product cards now show `changed` / `unchanged` as the SPEC §3 table says. The reference has no product chip; spec wins over reference. `.chip.changed` shares the signal tint with live/robust.
+- Verify: 64 passed. New `verify/chips.spec.ts` (5 tests × 4 viewports) checks every chip against its enum, one chip per card, product/code with all levels open, the `unplaced` chip, out-of-enum words dropped, and chip typography. Looked at `verify/shots/chips/02-all-expanded.*` and `03-product-changed.*`: chips correct and legible at all four, nothing clipped. Report in `verify/REPORT.md`.
+- Design review: a changed product card says "changed" twice (chip + status row). Carried to UX phase. Older open items unchanged (3+1 assumptions grid, truncated rests-on/trigger, 16px status row).
+- Ticked check 16.
+- Next: check 17 (card expands in place with evidence links, resting-on, analogue, history; stack does not shift), then 18 (themes) and 19 (400px once the bar exists).
