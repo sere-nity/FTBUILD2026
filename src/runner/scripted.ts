@@ -11,28 +11,28 @@ type Plan = { kind: string; dir: Direction; levels: Level[]; touches: string };
 /** Thrown out of `tick()` when the user stops a run that has already started changing things. */
 const STOPPED = Symbol('stopped');
 
-let wake: (() => void) | null = null;
+/** Every pause in flight. Cells in one level settle concurrently, so there can be more than one. */
+const wakers = new Set<() => void>();
 
 /** Ask the current run to stop. Before anything has changed (sizing, intervene) this ends the wait at once. */
 export function stop(): void {
   if (!store.job) return;
   store.abort = true;
-  wake?.();
+  for (const wake of [...wakers]) wake();
 }
 
 /** Sleep that ends early when `stop()` is called. Resolves true if stopped. */
 function wait(ms: number): Promise<boolean> {
   if (store.abort) return Promise.resolve(true);
   return new Promise((resolve) => {
-    const t = setTimeout(() => {
-      wake = null;
-      resolve(store.abort);
-    }, ms);
-    wake = () => {
+    const done = (stopped: boolean) => {
       clearTimeout(t);
-      wake = null;
-      resolve(true);
+      wakers.delete(wake);
+      resolve(stopped);
     };
+    const wake = () => done(true);
+    const t = setTimeout(() => done(store.abort), ms);
+    wakers.add(wake);
   });
 }
 
@@ -69,7 +69,8 @@ async function prepare(id: string, status: string, note: string, ms: number = TI
  * proposed → settled. The mutation is applied at once; every ghosted field that moved keeps
  * its old value in `_prev` so the card shows it struck through beside the new one. After the
  * hold the ghost fades in place, then the card is redrawn settled: ↑/↓ on the field that
- * moved, accent rule kept via `changed`. The caller's log line follows the settle directly.
+ * moved, accent rule kept via `changed`. The caller's log line follows the settle directly:
+ * the last `render()` here and the line's append happen in the same task, so they share a frame.
  */
 async function settle(id: string, mutate: (c: Card) => void, why: string): Promise<void> {
   const c = byId(id)!;
@@ -182,14 +183,18 @@ export async function runMilestone(text: string): Promise<void> {
     touchLevel('product');
     await prepare('p1', 'Preparing…', 'which flows does this change?');
     await prepare('p2', 'Preparing…', 'which flows does this change?', TIMING.prepareFast);
-    await settle('p1', (c) => {
-      c.note = 'cause search now exposed to agents';
-      c.hist.push('Oct 10: agent endpoint added');
-    }, 'agent endpoint');
-    await settle('p2', (c) => {
-      c.note = 'verified-partner data readable by agents';
-      c.hist.push('Oct 10: partner data exposed to agents');
-    }, 'partner data');
+    // One log line covers both flows, so they settle together (SPEC §5: cells in a level run
+    // concurrently) and the line lands the frame they do.
+    await Promise.all([
+      settle('p1', (c) => {
+        c.note = 'cause search now exposed to agents';
+        c.hist.push('Oct 10: agent endpoint added');
+      }, 'agent endpoint'),
+      settle('p2', (c) => {
+        c.note = 'verified-partner data readable by agents';
+        c.hist.push('Oct 10: partner data exposed to agents');
+      }, 'partner data'),
+    ]);
     await logLine(e, 'product: donor discovery flow and partner search now expose data to agents · giving app unchanged');
 
     touchLevel('initiatives');
