@@ -1,6 +1,6 @@
 // One render(state) function. The DOM is a function of the store, same as the reference.
 import {
-  LEVELS, SRC, ANALOGUES, store, visible, byId, dots,
+  LEVELS, SRC, ANALOGUES, store, visible, byId, dots, chipFor,
   type Card, type State,
 } from './state';
 
@@ -72,16 +72,16 @@ export function renderCard(c: Card, s: State, base: State): HTMLElement {
   };
   const trend = c.trend ? `<span class="arrow ${c.trend === '↓' ? 'down' : ''}">${c.trend}</span>` : '';
 
-  let chip = '';
+  // One chip path for every level; chipFor() drops anything outside SPEC §3's enums.
+  const word = chipFor(c, s);
+  const chip = word ? `<span class="chip ${word}">${word}</span>` : '';
   let fields = '';
   if (c.level === 'world') {
-    chip = `<span class="chip ${c.chip}">${c.chip}</span>`;
     fields =
       `<span class="k">axes</span><span class="v wrap">${esc(c.sub ?? '')}</span>` +
       `<span class="k">signposts</span><span class="v">${diff('f', (v) => v.signposts)}${trend}</span>` +
       `<span class="k">last moved</span><span class="v">${c.f?.lastMoved ?? ''}</span>`;
   } else if (c.level === 'assumptions') {
-    chip = `<span class="chip">${c.kind}</span>`;
     const ev = c.ev ?? 0;
     const us = c.us ?? 0;
     const gap = Math.abs(ev - us) >= 2 ? ` <span class="flag" title="evidence and belief disagree">⚠</span>` : '';
@@ -90,7 +90,6 @@ export function renderCard(c: Card, s: State, base: State): HTMLElement {
       `<span class="k">belief</span><span class="v dots">${diff('us', dots)}${gap}</span>` +
       `<span class="k">exposure</span><span class="v">${diff('exposure', (v) => v + ' initiative' + (v === 1 ? '' : 's'))}${c.trendOn === 'exposure' ? trend : ''}</span>`;
   } else if (c.level === 'initiatives') {
-    chip = `<span class="chip ${c.chip}">${c.chip}</span>`;
     const restIds = c.rests ?? [];
     const rests = restIds
       .map((id) => {

@@ -5,16 +5,30 @@ import analoguesJson from '../data/analogues.json';
 
 export type Level = 'world' | 'assumptions' | 'initiatives' | 'product' | 'code';
 
+export type WorldChip = 'live' | 'rising' | 'watch' | 'fading';
+export type InitiativeChip = 'robust' | 'hedge' | 'fragile';
+export type ProductChip = 'changed' | 'unchanged';
+export type AssumptionKind = 'fact' | 'interpretation' | 'prediction' | 'unplaced';
+
+/** The only words a chip may show, per level (SPEC §3). Anything else renders no chip. */
+export const CHIPS: Record<Level, readonly string[]> = {
+  world: ['live', 'rising', 'watch', 'fading'],
+  assumptions: ['fact', 'interpretation', 'prediction', 'unplaced'],
+  initiatives: ['robust', 'hedge', 'fragile'],
+  product: ['changed', 'unchanged'],
+  code: [],
+};
+
 export type Card = {
   id: string;
   level: Level;
   title: string;
   hist: string[];
   sub?: string;
-  chip?: string;
+  chip?: WorldChip | InitiativeChip;
   f?: { signposts: string; lastMoved: string };
   signposts?: string[];
-  kind?: 'fact' | 'interpretation' | 'prediction' | 'unplaced';
+  kind?: AssumptionKind;
   ev?: number;
   us?: number;
   exposure?: number;
@@ -97,3 +111,16 @@ export function byId(id: string): Card | undefined {
 }
 
 export const dots = (n: number): string => '●'.repeat(n) + '○'.repeat(5 - n);
+
+/**
+ * The chip a card shows, or null for none. Assumptions use `kind`; product cards
+ * derive theirs from whether the last run changed them. A value outside the
+ * level's enum is dropped rather than shown, so no freeform word reaches a card.
+ */
+export function chipFor(c: Card, s: State): string | null {
+  const raw =
+    c.level === 'assumptions' ? c.kind
+    : c.level === 'product' ? (s.changed[c.id] ? 'changed' : 'unchanged')
+    : c.chip;
+  return raw && CHIPS[c.level].includes(raw) ? raw : null;
+}

@@ -196,7 +196,7 @@ main {
   color: var(--ink-2);
   white-space: nowrap;
 }
-.chip.live, .chip.robust { background: var(--signal-soft); color: var(--signal); }
+.chip.live, .chip.robust, .chip.changed { background: var(--signal-soft); color: var(--signal); }
 .chip.fragile, .chip.rising { background: var(--warn-soft); color: var(--warn); }
 .chip.fading { color: var(--ink-3); }
 .fields {

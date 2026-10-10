@@ -54,3 +54,25 @@ Run: 44 passed (smoke + stack + assumptions at 4 viewports). New spec `verify/as
 2. Assumptions grid at desktop is 3 + 1: card a4 sits alone on a second row with two empty slots. Unchanged from iteration 2; revisit (maybe 2×2 or 4-across at ≥1200px) in UX phase.
 3. Initiative "rests on" / "trigger" values still truncated with ellipsis at every width; the full text is only in a title attribute, which phones cannot show. Open from iteration 2.
 4. Empty `.status` row still reserves 16px under every idle card. Open from iteration 2.
+
+## 2026-10-10 · Iteration 4 · Chips use only the SPEC §3 enums
+
+Run: 64 passed (smoke + stack + assumptions + chips at 4 viewports). New spec `verify/chips.spec.ts` (5 tests). Chip text now goes through one `chipFor()` in `src/state.ts` with a `CHIPS` enum map per level; a word outside the enum renders no chip. Product cards now carry `changed` / `unchanged` per the SPEC §3 table (the reference had no product chip; spec wins).
+
+### Screenshots reviewed
+- `verify/shots/chips/01-first-load.*.png` (4): identical to the stack first-load frames. Chips: LIVE, WATCH, INTERPRETATION ×2, PREDICTION, FACT, HEDGE, FRAGILE, ROBUST. Nine chips, nine cards, all enum words.
+- `verify/shots/chips/02-all-expanded.desktop-light.png`: product level opened to three cards, each with a grey UNCHANGED chip; code milestone card has no chip. Grid 3-across, chips right-aligned in the head row, nothing clipped.
+- `verify/shots/chips/02-all-expanded.phone-dark.png`: single column, UNCHANGED chips legible on dark cards, no horizontal scroll.
+- `verify/shots/chips/03-product-changed.desktop-light.png`: p1 "Donor discovery flow" flips to a blue CHANGED chip, card takes the accent border + left rule, status row reads "changed exposed to agents", level header reads "1 changed" in blue. p2/p3 stay UNCHANGED grey.
+- `verify/shots/chips/03-product-changed.desktop-dark.png`: same in dark; CHANGED chip in the dark signal tint, legible.
+- `verify/shots/chips/03-product-changed.phone-light.png`: same at 400px; chip and status row fit on their own lines.
+
+### Defects
+- None blocking. Assertions cover: every chip on first load in its level enum; at most one chip per card; product chips changed/unchanged with all five levels open; code has no chip; `unplaced` kind renders the `unplaced` chip and the dashed card; out-of-enum words (`exciting`, `hunch`, `promising`) render no chip and leave the rest of the card intact; chips are uppercase, mono, nowrap.
+
+### Design review (SPEC §7)
+1. A changed product card says "changed" twice: the CHANGED chip in the head and the "changed" status row underneath. Spec asks for the chip; the status row is from the reference. One of them should go in the UX phase (likely the status word, keeping its note).
+2. Three UNCHANGED chips in a row on the product level is quiet grey, but it is three repeated words where the reference had none. Acceptable per spec; watch whether it reads as noise once the runner collapses Product after a run.
+3. Assumptions grid still 3 + 1 at desktop (open from iteration 3).
+4. Initiative "rests on" / "trigger" truncated with ellipsis at every width (open from iteration 2).
+5. Empty `.status` row still reserves 16px on idle cards (open from iteration 2).
