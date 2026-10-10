@@ -27,6 +27,11 @@ for i in $(seq 1 "$MAX"); do
     --output-format text \
     2>&1 | tee -a "$LOG"
 
+  # Rate limit: don't burn iterations while the session limit is in force.
+  if tail -5 "$LOG" | grep -q "session limit"; then
+    echo "rate limited; sleeping 10 min" | tee -a "$LOG"; sleep 600; continue
+  fi
+
   # Safety net: make sure nothing is left uncommitted between iterations.
   if ! git diff --quiet || ! git diff --cached --quiet || [ -n "$(git ls-files --others --exclude-standard)" ]; then
     git add -A && git commit -qm "chore: iteration $i autosave" && echo "autosaved" | tee -a "$LOG"
