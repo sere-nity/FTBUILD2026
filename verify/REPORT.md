@@ -107,3 +107,29 @@ Detail is a static descendant of the card (no dialog/overlay); four sections in 
 3. Assumptions grid is 3 + 1 at desktop; with a1 open the lone a4 under it reads as an afterthought (open since iteration 3).
 4. Initiative "rests on" / "trigger" truncated with ellipsis (open since iteration 2).
 5. Product "changed" said twice when changed (open since iteration 4).
+
+## 2026-10-10 · Iteration 6 · Themes legible, every colour a token, explicit body background (check 18)
+
+Run 1 (theme spec alone): 20 passed. Negative check: with the old light `--ink-3` (#8a8f99) restored, the contrast test fails on 30+ samples at 3.03–3.25:1, so it bites. Full run: 108 passed. New spec `verify/theme.spec.ts` (5 tests × 4 viewports).
+
+Token changes (reference values were below WCAG AA for 11–12px labels): light `--ink-3` #8a8f99 → #666b74 (card 3.25 → 5.36, card-2 2.84 → 4.69); light `--warn` #9a6b12 → #8a5f0e (warn-soft 4.02 → 4.84); dark `--ink-3` #737a86 → #8a919d (card-2 3.51 → 4.78). Nothing else moved.
+
+### Screenshots reviewed
+- `verify/shots/theme/01-first-load.desktop-light.png`: paper #f6f7f8 body, white cards, keys (axes, evidence, belief) now a mid grey that reads at a glance instead of fading into the card. Chips LIVE/ROBUST blue, FRAGILE ochre, rest grey. Only the black `now` pill and the blue chips carry colour.
+- `verify/shots/theme/01-first-load.desktop-dark.png`: #121417 body, cards one shade lighter with a visible rule, keys legible, chip tints in the lighter dark variants. Same layout as light, nothing shifted.
+- `verify/shots/theme/02-states.desktop-light.png`: job header on card-2 grey with mono "reaches 3 levels · 2 / 7 cells", 30% signal bar, ochre Stop button; read-only banner on warn-soft with ochre text, readable. a2 belief ⚠ in ochre, a1 open with blue evidence links, PRIOR STRATEGY box on card-2, p1 CHANGED chip + accent rule, PRODUCT "1 changed" in blue.
+- `verify/shots/theme/02-states.desktop-dark.png`: same states; banner is a deep brown with light ochre text, job header a slightly lighter band, links and CHANGED chip in the light blue, all readable. Analogue box distinguishable from the card.
+- `verify/shots/theme/02-states.phone-light.png`: single column; job header, banner, open a1 with wrapped links, analogue box, changed p1 all fit at 400px. No horizontal scroll.
+- `verify/shots/theme/02-states.phone-dark.png`: same in dark, legible.
+
+### Defects
+- None blocking. Job header and read-only banner showing together is a test artefact (rich state turns both on); they never coexist in a real flow.
+
+### Assertions added
+Body background is opaque and equals the resolved `--paper`; luminance < 0.05 in dark and > 0.85 in light; `color-scheme: dark` applied in dark. Every visible text sample from 29 selectors (brand, counts, keys, values, chips, status, flag, detail headings/links/none, analogue keys/title, history, job title/meta/stop, banner) reaches ≥ 4.5:1 against the first opaque background behind it, in a state that exposes every coloured style. Signal and warn reach ≥ 3:1 on paper and card (focus ring, ⚠, Stop). No colour literal (`#hex`, `rgb()`, `hsl()`, named colour) in any colour-bearing property outside the `:root` token blocks of `src/style.css`; no hex anywhere else in the file; no inline colour styles or hex literals in `index.html` or `src/**/*.ts`.
+
+### Design review (SPEC §7)
+1. Dark theme cards are 1.09:1 against the paper, so the card surface is carried almost entirely by the 1px rule. Matches the reference; acceptable for a ledger, but the stack reads flatter in dark than in light. UX-phase candidate: nudge dark `--card` one step lighter.
+2. The darker `--ink-3` makes field keys (evidence, belief, shipped) heavier than the reference, so key and value are closer in weight. Hierarchy still holds because values are in `--ink` and keys in `--ink-3`, but watch it once ghosts (also `--ink-3`, struck through) appear beside new values in the `proposed` state.
+3. The black `now` pill in the top bar is the highest-contrast element on an idle screen, ahead of anything that changed. Matches the reference. Revisit in UX phase (outline instead of fill).
+4. Carried: full citation sentences as link text on 230px cards; dead 16px status band; 3+1 assumptions grid; truncated rests-on/trigger; double "changed" on product cards; ⚠ glyph small.
