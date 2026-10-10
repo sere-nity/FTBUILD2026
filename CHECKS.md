@@ -24,7 +24,7 @@ Tick a box only when `npm run verify` evidence (assertions + screenshots you hav
 - [x] 2-second intervene window after sizing; Esc during it leaves state unchanged
 - [x] `preparing` shows spinner + per-cell note; `proposed` shows old value ghosted beside new; `settled` keeps ↑/↓ and accent rule
 - [x] Log line for each cell appears in sync with that cell settling (assert ordering)
-- [ ] Levels touched by a run expand; Product and Code collapse again when the run ends
+- [x] Levels touched by a run expand; Product and Code collapse again when the run ends
 - [ ] Level headers show "N changed" after a run
 
 ## Flows (SPEC §8), each at desktop + phone, light + dark, with screenshots per step
