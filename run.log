@@ -189,3 +189,23 @@ Iteration 12 done. Check 24 ticked with evidence, four commits on `main`.
 **Next**: check 25 (touched levels expand, Product/Code collapse at run end). Runner already does it; needs a per-frame `expanded` watcher spec.
 autosaved
 === iteration 12  02:17:45 ===
+Iteration 13 done. Check 25 ticked, tree clean.
+
+**What happened**
+- Behaviour already existed in `src/runner/scripted.ts` (`touchLevel` opens, `running` closes). Check needed evidence, not code.
+- New `verify/levels.spec.ts`: 3 tests × 4 viewports. Per-frame watcher records each level's open/compact state, card phases, header show/hide frames.
+- Measured: Code opens on frame `c1` first prepares, Product on frame `p1` prepares, both close on frame header hides. All 0ms at every viewport. World/Assumptions/Initiatives never change. Esc in window: nothing opens. Stop mid-run: both close with header.
+- Full suite: 212 passed. Shots looked at, report in `verify/REPORT.md`. README gained paragraph on quiet levels.
+
+**Commits**
+- `69d2777` levels spec
+- `7cd223d` report, CHECKS tick, README
+- `46ee229` refreshed shots
+- `44b8511` PROGRESS entry
+
+**New design-review items** (no fix this pass, logged)
+- UNCHANGED chips on all three product cards while first one already preparing. Chip contradicts spinner.
+- Level open/close snaps. Only state change in run with no motion.
+- Product compact line wraps at desktop, "expand" orphaned on line two.
+
+**Next iteration**: check 26, "N changed" on level headers. Render already does it; needs spec asserting all five headers after Flow A, signal colour, count climbs at propose, survives expand/collapse and reload.
